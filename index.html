@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合資定期定額 · 台股國運基金</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a1f2b; color: #e0e0e0;
+            font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            min-height: 100vh; line-height: 1.6;
+        }
+        .navbar {
+            background: #222837; border-bottom: 1px solid #2f3542;
+            padding: 0 24px; position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .nav-inner {
+            max-width: 1300px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 60px;
+        }
+        .logo { font-weight: 700; font-size: 1.1rem; color: #c8963e; letter-spacing: 0.05em; }
+        .nav-links { display: flex; gap: 16px; align-items: center; }
+        .nav-links a, .nav-links select {
+            color: #b0b8c5; text-decoration: none; font-size: 0.9rem; font-weight: 500;
+            background: transparent; border: 1px solid #3a4150;
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: 0.2s; outline: none;
+        }
+        .nav-links a:hover, .nav-links select:hover { border-color: #c8963e; color: #c8963e; }
+        .nav-links select {
+            appearance: none;
+            background: #222837 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23b0b8c5' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
+            padding-right: 30px;
+        }
+        .container { max-width: 1300px; margin: 0 auto; padding: 24px 20px; }
+        .section-title {
+            font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;
+            color: #f0f0f0; border-left: 4px solid #c8963e; padding-left: 14px;
+        }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .card {
+            background: #222837; border: 1px solid #2f3542; border-radius: 10px;
+            padding: 18px 16px; transition: 0.2s;
+        }
+        .card:hover { border-color: #c8963e; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+        .card .label { font-size: 0.8rem; color: #8a92a4; margin-bottom: 6px; letter-spacing: 0.02em; }
+        .card .value { font-size: 1.8rem; font-weight: 700; color: #ffffff; line-height: 1.2; }
+        .card .value.gold { color: #c8963e; }
+        .chart-box {
+            background: #222837; border: 1px solid #2f3542; border-radius: 10px;
+            padding: 20px; margin-bottom: 28px; position: relative; height: 420px;
+        }
+        .chart-box.small { height: 300px; }
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-bottom: 28px; }
+        @media (max-width: 768px) { .chart-row { grid-template-columns: 1fr; } }
+        .chart-box canvas { width: 100%; height: 100%; }
+        .table-wrapper {
+            background: #222837; border-radius: 10px; border: 1px solid #2f3542;
+            overflow-x: auto; margin-bottom: 28px;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th {
+            background: #2a3140; color: #c8963e; font-weight: 600;
+            padding: 12px 14px; text-align: left; white-space: nowrap;
+        }
+        td { padding: 10px 14px; border-bottom: 1px solid #2f3542; color: #d0d5dd; white-space: nowrap; }
+        tr:hover td { background: #2a3140; }
+        .clickable-row { cursor: pointer; }
+        .clickable-row:hover td { background: #2f3848; color: #fff; }
+        .back-btn {
+            display: inline-block; margin-bottom: 16px; padding: 8px 18px;
+            background: transparent; border: 1px solid #c8963e; color: #c8963e;
+            border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s;
+        }
+        .back-btn:hover { background: #c8963e; color: #1a1f2b; }
+        .hidden { display: none !important; }
+        .loading { text-align: center; padding: 40px; color: #8a92a4; }
+        .error { color: #e06c75; background: #2a1f1f; padding: 12px; border-radius: 6px; margin: 12px 0; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-inner">
+            <div class="logo">📈 合資定期定額 · 台股國運基金</div>
+            <div class="nav-links">
+                <a href="#" id="navOverview">總覽</a>
+                <select id="memberSelect">
+                    <option value="">👤 團員明細</option>
+                </select>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" id="app">
+        <div id="overviewSection" class="hidden">
+            <div class="section-title">📊 基金總覽</div>
+            <div class="cards" id="overviewCards"></div>
+            <div class="chart-row">
+                <div class="chart-box small"><canvas id="pieChart"></canvas></div>
+                <div class="chart-box small"><canvas id="overviewChart"></canvas></div>
+            </div>
+            <div class="section-title">👥 團員績效摘要</div>
+            <div class="table-wrapper">
+                <table id="memberSummaryTable">
+                    <thead><tr><th>成員</th><th>投入總金額</th><th>持有單位數</th><th>當前價值</th><th>報酬率</th><th>每月建議投資</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="memberSection" class="hidden">
+            <button class="back-btn" id="backToOverview">← 返回總覽</button>
+            <div class="section-title" id="memberTitle"></div>
+            <div class="cards" id="memberCards"></div>
+            <div class="chart-box"><canvas id="memberNavChart"></canvas></div>
+            <div class="chart-box"><canvas id="memberInvestmentChart"></canvas></div>
+            <div class="section-title">📋 歷史交易明細</div>
+            <div class="table-wrapper">
+                <table id="memberDetailTable">
+                    <thead><tr><th>日期</th><th>投入金額</th><th>成交淨值</th><th>購得單位數</th><th>累積單位</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="loadingMsg" class="loading">⏳ 正在從 Google Sheets 讀取最新資料...</div>
+    </div>
+
+    <script>
+        (function() {
+            const CSV_URLS = {
+                overview: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=1167489800&single=true&output=csv',
+                coreValues: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=1130608596&single=true&output=csv',
+                memberSummary: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=284048808&single=true&output=csv',
+                members: [
+                    { name: '淡定ㄉ圍觀', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=1138157330&single=true&output=csv' },
+                    { name: '隔壁ㄉ老王', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=1862214689&single=true&output=csv' },
+                    { name: '真的很敷衍', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=22779118&single=true&output=csv' },
+                    { name: '樂天小腳腳', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=2107206751&single=true&output=csv' },
+                    { name: '太空軍校生', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=1339484185&single=true&output=csv' },
+                    { name: '育仔', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=330914372&single=true&output=csv' }
+                ]
+            };
+
+            let overviewData = null;
+            let coreValues = {};
+            let memberSummaryData = [];
+            let membersData = [];
+            let currentMemberIndex = -1;
+            let overviewChartInstance = null;
+            let pieChartInstance = null;
+            let memberNavChartInstance = null;
+            let memberInvestmentChartInstance = null;
+
+            const overviewSection = document.getElementById('overviewSection');
+            const memberSection = document.getElementById('memberSection');
+            const overviewCardsDiv = document.getElementById('overviewCards');
+            const memberSummaryBody = document.querySelector('#memberSummaryTable tbody');
+            const memberSelect = document.getElementById('memberSelect');
+            const backBtn = document.getElementById('backToOverview');
+            const memberTitle = document.getElementById('memberTitle');
+            const memberCardsDiv = document.getElementById('memberCards');
+            const memberDetailBody = document.querySelector('#memberDetailTable tbody');
+            const loadingMsg = document.getElementById('loadingMsg');
+            const navOverview = document.getElementById('navOverview');
+
+            // ========== 替換 1：升級 parseCSV（正確處理雙引號） ==========
+            function parseCSV(text) {
+                const rows = [];
+                const lines = text.split('\n');
+                for (let line of lines) {
+                    line = line.trim();
+                    if (line === '') continue;
+                    
+                    let cols = [];
+                    let current = '';
+                    let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            cols.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    cols.push(current.trim());
+                    cols = cols.map(c => c.replace(/^"|"$/g, ''));
+                    rows.push(cols);
+                }
+                return rows;
+            }
+
+            function safeParseFloat(str) {
+                if (!str) return NaN;
+                str = str.replace(/[^\d.-]/g, '').trim();
+                const val = parseFloat(str);
+                return isNaN(val) ? NaN : val;
+            }
+
+            function formatNum(num, decimals = 0) {
+                if (isNaN(num)) return '--';
+                return num.toLocaleString('zh-TW', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+            }
+
+            function formatROI(rawROI) {
+                if (isNaN(rawROI)) return '--';
+                let roi = rawROI;
+                if (Math.abs(roi) < 1) roi *= 100;
+                return formatNum(roi, 2) + '%';
+            }
+
+            // 核心數值 (保持原始簡單讀取)
+            async function fetchCoreValues() {
+                const resp = await fetch(CSV_URLS.coreValues);
+                const text = await resp.text();
+                const rows = parseCSV(text);
+                const values = {};
+                for (let i = 0; i < rows.length; i++) {
+                    const cols = rows[i];
+                    if (cols.length < 2) continue;
+                    const key = cols[0].trim();
+                    const val = cols[1].trim();
+                    if (key && val) values[key] = val;
+                }
+                return {
+                    stockPrice: safeParseFloat(values['00631L 現價']),
+                    totalShares: safeParseFloat(values['合資總持股數']),
+                    cash: safeParseFloat(values['帳上現金']),
+                    totalAsset: safeParseFloat(values['合資總資產']),
+                    totalUnits: safeParseFloat(values['總發行單位']),
+                    currentNAV: safeParseFloat(values['當前單位淨值']),
+                    hwm: safeParseFloat(values['(HWM)歷史最高單位淨值']),
+                    maxDrawdown: safeParseFloat(values['最大回撤'])
+                };
+            }
+
+            // ========== 替換 2：更新 fetchMemberSummary（存名字 + 寬鬆欄位） ==========
+            async function fetchMemberSummary() {
+                const resp = await fetch(CSV_URLS.memberSummary);
+                const text = await resp.text();
+                const rows = parseCSV(text);
+                const summary = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const cols = rows[i];
+                    if (cols.length < 3) continue;
+                    const name = cols[0];
+                    if (!name) continue;
+                    const invested = safeParseFloat(cols[1]);
+                    const units = safeParseFloat(cols[2]);
+                    if (isNaN(invested) || isNaN(units)) continue;
+                    const value = cols.length > 3 ? safeParseFloat(cols[3]) : NaN;
+                    const roi = cols.length > 4 ? safeParseFloat(cols[4]) : NaN;
+                    const monthly = cols.length > 5 ? safeParseFloat(cols[5]) : NaN;
+                    summary.push({ name, invested, units, value, roi, monthly });
+                }
+                return summary;
+            }
+
+            // 每週淨值
+            async function fetchWeeklyNAV() {
+                const resp = await fetch(CSV_URLS.overview);
+                const text = await resp.text();
+                const rows = parseCSV(text);
+                const weeklyNAV = [];
+                for (let i = 0; i < rows.length; i++) {
+                    const cols = rows[i];
+                    if (cols.length < 4) continue;
+                    const dateStr = cols[0].trim();
+                    if (!/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(dateStr)) continue;
+                    const asset = safeParseFloat(cols[1]);
+                    const invested = safeParseFloat(cols[2]);
+                    const nav = safeParseFloat(cols[3]);
+                    if (isNaN(asset) || isNaN(invested) || isNaN(nav)) continue;
+                    weeklyNAV.push({ date: dateStr, asset, invested, nav });
+                }
+                return weeklyNAV;
+            }
+
+            async function fetchMemberInvestments(url) {
+                const resp = await fetch(url);
+                const text = await resp.text();
+                const rows = parseCSV(text);
+                const investments = [];
+                for (let i = 0; i < rows.length; i++) {
+                    const cols = rows[i];
+                    if (cols.length < 3) continue;
+                    const dateStr = cols[0].trim();
+                    if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(dateStr)) {
+                        const amount = safeParseFloat(cols[1]);
+                        const nav = safeParseFloat(cols[2]);
+                        if (!isNaN(amount) && !isNaN(nav)) {
+                            const units = cols.length >= 4 ? safeParseFloat(cols[3]) : amount / nav;
+                            investments.push({
+                                date: dateStr, amount, nav,
+                                units: isNaN(units) ? amount / nav : units
+                            });
+                        }
+                    }
+                }
+                return investments;
+            }
+
+            function computeMemberNavSeries(weeklyNAV, investments) {
+                if (!weeklyNAV.length || !investments.length) return [];
+                const sorted = [...investments].sort((a, b) => a.date.localeCompare(b.date));
+                const series = [];
+                let cumUnits = 0, invIdx = 0;
+                for (let w of weeklyNAV) {
+                    while (invIdx < sorted.length && sorted[invIdx].date <= w.date) {
+                        cumUnits += sorted[invIdx].units;
+                        invIdx++;
+                    }
+                    series.push({ date: w.date, nav: w.nav, cumUnits, value: cumUnits * w.nav });
+                }
+                return series;
+            }
+
+            function renderOverview() {
+                const cv = coreValues;
+                const cards = [
+                    { label: '當前單位淨值', value: formatNum(cv.currentNAV, 4), cls: 'gold' },
+                    { label: '總資產淨值', value: 'NT$ ' + formatNum(cv.totalAsset, 0) },
+                    { label: '歷史最高淨值 (HWM)', value: formatNum(cv.hwm, 4) },
+                    { label: '最大回撤', value: formatNum(cv.maxDrawdown, 2) + '%' },
+                    { label: '合資總持股數', value: formatNum(cv.totalShares, 0) + ' 股' },
+                    { label: '帳上現金', value: 'NT$ ' + formatNum(cv.cash, 0) },
+                    { label: '總發行單位', value: formatNum(cv.totalUnits, 5) },
+                ];
+                overviewCardsDiv.innerHTML = cards.map(c =>
+                    `<div class="card"><div class="label">${c.label}</div><div class="value ${c.cls||''}">${c.value}</div></div>`
+                ).join('');
+
+                // ========== 替換 3：更新表格渲染（使用 CSV 名字 + 格式化） ==========
+                const memberNames = CSV_URLS.members.map(m => m.name);
+                memberSummaryBody.innerHTML = memberSummaryData.map((m, idx) => {
+                    const name = m.name || memberNames[idx] || `成員${idx+1}`;
+                    const roiStr = !isNaN(m.roi) ? formatROI(m.roi) : '--';
+                    const monthlyStr = !isNaN(m.monthly) ? 'NT$ ' + formatNum(m.monthly, 0) : '--';
+                    return `<tr class="clickable-row" data-member-index="${idx}">
+                        <td>${name}</td>
+                        <td>NT$ ${formatNum(m.invested, 0)}</td>
+                        <td>${formatNum(m.units, 5)}</td>
+                        <td>NT$ ${formatNum(m.value, 0)}</td>
+                        <td>${roiStr}</td>
+                        <td>${monthlyStr}</td>
+                    </tr>`;
+                }).join('');
+
+                document.querySelectorAll('#memberSummaryTable .clickable-row').forEach(row => {
+                    row.addEventListener('click', function() {
+                        showMemberPage(parseInt(this.dataset.memberIndex));
+                    });
+                });
+
+                drawPieChart(cv.totalAsset, cv.cash);
+                drawOverviewChart(overviewData.weeklyNAV, cv.hwm);
+            }
+
+            function drawPieChart(totalAsset, cash) {
+                const ctx = document.getElementById('pieChart').getContext('2d');
+                if (pieChartInstance) pieChartInstance.destroy();
+                const stockValue = totalAsset - cash;
+                pieChartInstance = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['持股價值', '帳上現金'],
+                        datasets: [{ data: [stockValue, cash], backgroundColor: ['#4a90d9', '#c8963e'], borderColor: '#1a1f2b', borderWidth: 2 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#b0b8c5' } },
+                            tooltip: { callbacks: { label: (ctx) => `${ctx.label}: NT$ ${formatNum(ctx.raw,0)} (${((ctx.raw/totalAsset)*100).toFixed(1)}%)` } }
+                        }
+                    }
+                });
+            }
+
+            function drawOverviewChart(weeklyNAV, hwm) {
+                const ctx = document.getElementById('overviewChart').getContext('2d');
+                if (overviewChartInstance) overviewChartInstance.destroy();
+                const dates = weeklyNAV.map(w => w.date);
+                const assets = weeklyNAV.map(w => w.asset);
+                const navs = weeklyNAV.map(w => w.nav);
+                overviewChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            { label: '總資產淨值 (NT$)', data: assets, borderColor: '#4a90d9', backgroundColor: 'rgba(74,144,217,0.1)', fill: true, yAxisID: 'y', tension: 0.2, pointRadius: 1 },
+                            { label: '單位淨值', data: navs, borderColor: '#c8963e', backgroundColor: 'rgba(200,150,62,0.1)', fill: false, yAxisID: 'y1', tension: 0.2, pointRadius: 1 }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: { labels: { color: '#b0b8c5' } } },
+                        scales: {
+                            x: { ticks: { color: '#8a92a4' }, grid: { color: '#2f3542' } },
+                            y: { type: 'linear', position: 'left', title: { display: true, text: '總資產 (NT$)', color: '#4a90d9' }, ticks: { color: '#8a92a4', callback: v => (v/10000).toFixed(1)+'萬' }, grid: { color: '#2f3542' } },
+                            y1: { type: 'linear', position: 'right', title: { display: true, text: '單位淨值', color: '#c8963e' }, ticks: { color: '#8a92a4' }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            function showMemberPage(index) {
+                if (index < 0 || index >= membersData.length) return;
+                currentMemberIndex = index;
+                const memberInfo = CSV_URLS.members[index];
+                const investments = membersData[index];
+                const series = computeMemberNavSeries(overviewData.weeklyNAV, investments);
+                overviewSection.classList.add('hidden');
+                memberSection.classList.remove('hidden');
+                memberTitle.textContent = `👤 ${memberInfo.name} 的投資歷程`;
+                memberSelect.value = index.toString();
+                const totalInvested = investments.reduce((s,i) => s + i.amount, 0);
+                const latest = series.length ? series[series.length-1] : null;
+                const currentValue = latest ? latest.value : 0;
+                const roi = totalInvested ? ((currentValue - totalInvested) / totalInvested * 100) : 0;
+                const totalUnits = latest ? latest.cumUnits : 0;
+                memberCardsDiv.innerHTML = `
+                    <div class="card"><div class="label">總投入金額</div><div class="value">NT$ ${formatNum(totalInvested,0)}</div></div>
+                    <div class="card"><div class="label">目前淨值</div><div class="value gold">NT$ ${formatNum(currentValue,0)}</div></div>
+                    <div class="card"><div class="label">報酬率</div><div class="value">${formatNum(roi,2)}%</div></div>
+                    <div class="card"><div class="label">持有單位數</div><div class="value">${formatNum(totalUnits,5)}</div></div>`;
+                let cumUnits = 0;
+                memberDetailBody.innerHTML = investments.map(inv => {
+                    cumUnits += inv.units;
+                    return `<tr><td>${inv.date}</td><td>NT$ ${formatNum(inv.amount,0)}</td><td>${formatNum(inv.nav,4)}</td><td>${formatNum(inv.units,5)}</td><td>${formatNum(cumUnits,5)}</td></tr>`;
+                }).join('');
+                drawMemberCharts(series, investments);
+            }
+
+            function drawMemberCharts(series, investments) {
+                const ctx1 = document.getElementById('memberNavChart').getContext('2d');
+                if (memberNavChartInstance) memberNavChartInstance.destroy();
+                const dates = series.map(s => s.date);
+                const values = series.map(s => s.value);
+                const cumInvested = [];
+                let totalInv = 0, invIdx = 0;
+                for (let s of series) {
+                    while (invIdx < investments.length && investments[invIdx].date <= s.date) {
+                        totalInv += investments[invIdx].amount; invIdx++;
+                    }
+                    cumInvested.push(totalInv);
+                }
+                memberNavChartInstance = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            { label: '個人資產淨值 (NT$)', data: values, borderColor: '#c8963e', backgroundColor: 'rgba(200,150,62,0.1)', fill: true, tension: 0.2, pointRadius: 1 },
+                            { label: '累計投入金額', data: cumInvested, borderColor: '#8a92a4', borderDash: [6,4], fill: false, tension: 0.2, pointRadius: 1 }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#b0b8c5' } } },
+                        scales: {
+                            x: { ticks: { color: '#8a92a4' }, grid: { color: '#2f3542' } },
+                            y: { ticks: { color: '#8a92a4', callback: v => (v/10000).toFixed(1)+'萬' }, grid: { color: '#2f3542' } }
+                        }
+                    }
+                });
+                const ctx2 = document.getElementById('memberInvestmentChart').getContext('2d');
+                if (memberInvestmentChartInstance) memberInvestmentChartInstance.destroy();
+                const monthLabels = investments.map(inv => inv.date.substring(0,7));
+                const amounts = investments.map(inv => inv.amount);
+                memberInvestmentChartInstance = new Chart(ctx2, {
+                    type: 'bar',
+                    data: { labels: monthLabels, datasets: [{ label: '每月投入金額 (NT$)', data: amounts, backgroundColor: '#c8963e', borderRadius: 4 }] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#b0b8c5' } } },
+                        scales: {
+                            x: { ticks: { color: '#8a92a4' }, grid: { color: '#2f3542' } },
+                            y: { ticks: { color: '#8a92a4', callback: v => 'NT$ '+formatNum(v,0) }, grid: { color: '#2f3542' } }
+                        }
+                    }
+                });
+            }
+
+            function backToOverview() {
+                overviewSection.classList.remove('hidden');
+                memberSection.classList.add('hidden');
+                currentMemberIndex = -1;
+                memberSelect.value = '';
+            }
+
+            async function init() {
+                try {
+                    loadingMsg.style.display = 'block';
+                    const [core, summary, weekly] = await Promise.all([
+                        fetchCoreValues(),
+                        fetchMemberSummary(),
+                        fetchWeeklyNAV()
+                    ]);
+                    coreValues = core;
+                    memberSummaryData = summary;
+                    overviewData = { weeklyNAV: weekly };
+
+                    const memberPromises = CSV_URLS.members.map(m => fetchMemberInvestments(m.url));
+                    membersData = await Promise.all(memberPromises);
+
+                    memberSelect.innerHTML = '<option value="">👤 團員明細</option>';
+                    CSV_URLS.members.forEach((m, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = idx; opt.textContent = m.name;
+                        memberSelect.appendChild(opt);
+                    });
+                    memberSelect.addEventListener('change', function(e) {
+                        const idx = parseInt(e.target.value);
+                        if (!isNaN(idx)) showMemberPage(idx); else backToOverview();
+                    });
+
+                    renderOverview();
+                    loadingMsg.style.display = 'none';
+                    overviewSection.classList.remove('hidden');
+
+                    navOverview.addEventListener('click', (e) => { e.preventDefault(); backToOverview(); });
+                    backBtn.addEventListener('click', backToOverview);
+                } catch (err) {
+                    loadingMsg.innerHTML = `<div class="error">⚠️ 資料讀取失敗：${err.message}。請確認試算表已發布且網路正常。</div>`;
+                    console.error(err);
+                }
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>
