@@ -188,16 +188,215 @@
         .hidden { display: none !important; }
         .loading { text-align: center; padding: 40px; color: #8a92a4; }
         .error { color: #e06c75; background: #2a1f1f; padding: 12px; border-radius: 6px; margin: 12px 0; }
+
+        :root {
+            --fund-navy: #0b2f5b;
+            --fund-blue: #1f6fb2;
+            --fund-gold: #b8872f;
+            --fund-green: #16815a;
+            --fund-red: #b84d4d;
+            --ink: #152238;
+            --muted: #67758a;
+            --line: #d9e1ea;
+            --panel: #ffffff;
+            --page: #f4f7fb;
+        }
+        body {
+            background:
+                linear-gradient(180deg, #eef4fb 0%, var(--page) 250px, #f8fafc 100%);
+            color: var(--ink);
+            font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+        }
+        .navbar {
+            background: rgba(255,255,255,0.96);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 8px 24px rgba(15,34,58,0.08);
+        }
+        .nav-inner { height: 68px; }
+        .logo {
+            color: var(--fund-navy);
+            font-size: 1.04rem;
+            letter-spacing: 0;
+        }
+        .logo::before {
+            content: "00631L";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 28px;
+            padding: 0 9px;
+            margin-right: 10px;
+            border-radius: 4px;
+            background: var(--fund-navy);
+            color: #fff;
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+        }
+        .nav-links a,
+        .nav-links select {
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            color: var(--fund-navy);
+            border-radius: 4px;
+        }
+        .nav-links a:hover,
+        .nav-links select:hover {
+            border-color: var(--fund-blue);
+            color: var(--fund-blue);
+            background: #fff;
+        }
+        .nav-links select {
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1180px;
+            padding: 30px 20px 46px;
+        }
+        .hero-snapshot {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 18px 40px rgba(12,32,58,0.10);
+        }
+        .hero-snapshot-head {
+            margin: 0;
+            padding: 22px 24px;
+            background: linear-gradient(135deg, var(--fund-navy), #123f75);
+            color: #fff;
+            border-bottom: 4px solid var(--fund-gold);
+        }
+        .hero-eyebrow {
+            color: rgba(255,255,255,0.72);
+            letter-spacing: 0.12em;
+        }
+        .hero-title {
+            color: #fff;
+            font-size: 1.7rem;
+            letter-spacing: 0;
+        }
+        .hero-subtitle {
+            color: rgba(255,255,255,0.82);
+        }
+        .hero-badge {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.28);
+            color: #fff;
+            border-radius: 4px;
+        }
+        .hero-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0;
+            margin: 0;
+            border-bottom: 1px solid var(--line);
+        }
+        .hero-stat {
+            background: #fff;
+            border: 0;
+            border-right: 1px solid var(--line);
+            border-radius: 0;
+            padding: 18px 20px;
+        }
+        .hero-stat:last-child { border-right: 0; }
+        .hero-stat .label {
+            color: var(--muted);
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+        .hero-stat .value {
+            color: var(--fund-navy);
+            font-size: 1.82rem;
+        }
+        .hero-stat.current .value { color: var(--fund-blue); }
+        .hero-stat.gain .value { color: var(--fund-green); }
+        .hero-stat.loss .value { color: var(--fund-red); }
+        .hero-stat .delta { color: var(--muted); }
+        .hero-comparison {
+            padding: 18px 20px;
+            background: #fbfcfe;
+        }
+        .comparison-bar {
+            height: 18px;
+            background: #e8edf4;
+            border: 0;
+            border-radius: 4px;
+        }
+        .comparison-bar .invested {
+            background: var(--fund-blue);
+        }
+        .comparison-bar .current {
+            background: var(--fund-gold);
+        }
+        .comparison-legend { color: var(--muted); }
+        .section-title {
+            color: var(--fund-navy);
+            border-left-color: var(--fund-gold);
+            font-size: 1.18rem;
+            margin-top: 28px;
+        }
+        .card,
+        .chart-box,
+        .table-wrapper {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: 0 10px 26px rgba(12,32,58,0.06);
+        }
+        .card:hover {
+            border-color: #bfd0e2;
+            transform: none;
+            box-shadow: 0 12px 28px rgba(12,32,58,0.10);
+        }
+        .card .label { color: var(--muted); font-weight: 700; }
+        .card .value { color: var(--fund-navy); }
+        .card .value.gold { color: var(--fund-gold); }
+        th {
+            background: #eef3f8;
+            color: var(--fund-navy);
+            border-bottom: 1px solid var(--line);
+        }
+        td {
+            color: var(--ink);
+            border-bottom: 1px solid #edf1f5;
+        }
+        tr:hover td,
+        .clickable-row:hover td {
+            background: #f6f9fc;
+            color: var(--ink);
+        }
+        .back-btn {
+            background: #fff;
+            border-color: var(--fund-blue);
+            color: var(--fund-blue);
+            border-radius: 4px;
+        }
+        .back-btn:hover {
+            background: var(--fund-blue);
+            color: #fff;
+        }
+        .loading { color: var(--muted); }
+        .error {
+            color: #8f2f2f;
+            background: #fff1f1;
+            border: 1px solid #f1c6c6;
+        }
+        @media (max-width: 768px) {
+            .hero-grid { grid-template-columns: 1fr; }
+            .hero-stat { border-right: 0; border-bottom: 1px solid var(--line); }
+            .hero-title { font-size: 1.35rem; }
+            .hero-stat .value { font-size: 1.45rem; }
+        }
     </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-inner">
-            <div class="logo">📈 合資定期定額 · 台股國運基金</div>
+            <div class="logo">合資定期定額 · 台股國運基金</div>
             <div class="nav-links">
                 <a href="#" id="navOverview">總覽</a>
                 <select id="memberSelect">
-                    <option value="">👤 團員明細</option>
+                    <option value="">團員明細</option>
                 </select>
             </div>
         </div>
@@ -208,30 +407,30 @@
             <div class="hero-snapshot" id="overviewHero">
                 <div class="hero-snapshot-head">
                     <div>
-                        <div class="hero-eyebrow">Google Sheets Live Summary</div>
-                        <div class="hero-title">投入、目前價值、損益，一眼就能看懂</div>
-                        <div class="hero-subtitle" id="overviewHeroSubtitle">載入最新資料後，會顯示總投入、目前價值與差額。</div>
+                        <div class="hero-eyebrow">Fund Factsheet</div>
+                        <div class="hero-title">00631L 合資定期定額基金</div>
+                        <div class="hero-subtitle" id="overviewHeroSubtitle">即時彙整 Google Sheets 資料，呈現累計申購、目前資產價值與投資損益。</div>
                     </div>
                     <div class="hero-badge" id="overviewFreshness">資料更新中</div>
                 </div>
                 <div class="hero-grid" id="heroStats">
                     <div class="hero-stat">
-                        <div class="label">總投入金額</div>
+                        <div class="label">累計申購金額</div>
                         <div class="value" id="heroInvested">--</div>
                         <div class="delta" id="heroInvestedDelta">來自 Google Sheets</div>
                     </div>
                     <div class="hero-stat current">
-                        <div class="label">目前總價值</div>
+                        <div class="label">目前資產價值</div>
                         <div class="value" id="heroCurrent">--</div>
                         <div class="delta" id="heroCurrentDelta">當前市值 / 淨值換算</div>
                     </div>
                     <div class="hero-stat gain">
-                        <div class="label">損益金額</div>
+                        <div class="label">未實現損益</div>
                         <div class="value" id="heroProfit">--</div>
-                        <div class="delta" id="heroProfitDelta">目前價值 - 投入金額</div>
+                        <div class="delta" id="heroProfitDelta">資產價值 - 累計申購</div>
                     </div>
                     <div class="hero-stat">
-                        <div class="label">報酬率</div>
+                        <div class="label">整體報酬率</div>
                         <div class="value" id="heroROI">--</div>
                         <div class="delta" id="heroROIDelta">整體報酬表現</div>
                     </div>
@@ -242,42 +441,42 @@
                         <div class="current" id="comparisonCurrentBar"></div>
                     </div>
                     <div class="comparison-legend">
-                        <span class="legend-item"><span class="legend-swatch" style="background:#4a90d9"></span>總投入</span>
-                        <span class="legend-item"><span class="legend-swatch" style="background:#c8963e"></span>目前價值</span>
+                        <span class="legend-item"><span class="legend-swatch" style="background:#1f6fb2"></span>累計申購</span>
+                        <span class="legend-item"><span class="legend-swatch" style="background:#b8872f"></span>目前資產</span>
                     </div>
                 </div>
             </div>
-            <div class="section-title">📊 基金總覽</div>
+            <div class="section-title">基金總覽</div>
             <div class="cards" id="overviewCards"></div>
             <div class="chart-row">
                 <div class="chart-box small"><canvas id="pieChart"></canvas></div>
                 <div class="chart-box small"><canvas id="comparisonChart"></canvas></div>
                 <div class="chart-box small"><canvas id="overviewChart"></canvas></div>
             </div>
-            <div class="section-title">👥 團員績效摘要</div>
+            <div class="section-title">團員績效摘要</div>
             <div class="table-wrapper">
                 <table id="memberSummaryTable">
-                    <thead><tr><th>成員</th><th>投入總金額</th><th>持有單位數</th><th>當前價值</th><th>報酬率</th><th>每月建議投資</th></tr></thead>
+                    <thead><tr><th>成員</th><th>累計申購金額</th><th>持有單位數</th><th>目前資產價值</th><th>報酬率</th><th>每月建議申購</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
         </div>
 
         <div id="memberSection" class="hidden">
-            <button class="back-btn" id="backToOverview">← 返回總覽</button>
+            <button class="back-btn" id="backToOverview">返回總覽</button>
             <div class="section-title" id="memberTitle"></div>
             <div class="cards" id="memberCards"></div>
             <div class="chart-box"><canvas id="memberNavChart"></canvas></div>
             <div class="chart-box"><canvas id="memberInvestmentChart"></canvas></div>
-            <div class="section-title">📋 歷史交易明細</div>
+            <div class="section-title">歷史交易明細</div>
             <div class="table-wrapper">
                 <table id="memberDetailTable">
-                    <thead><tr><th>日期</th><th>投入金額</th><th>成交淨值</th><th>購得單位數</th><th>累積單位</th></tr></thead>
+                    <thead><tr><th>日期</th><th>申購金額</th><th>成交淨值</th><th>購得單位數</th><th>累積單位</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
         </div>
-        <div id="loadingMsg" class="loading">⏳ 正在從 Google Sheets 讀取最新資料...</div>
+        <div id="loadingMsg" class="loading">正在從 Google Sheets 讀取最新資料...</div>
     </div>
 
     <script>
@@ -324,6 +523,7 @@
             const heroCurrent = document.getElementById('heroCurrent');
             const heroProfit = document.getElementById('heroProfit');
             const heroROI = document.getElementById('heroROI');
+            const heroProfitCard = heroProfit.closest('.hero-stat');
             const comparisonInvestedBar = document.getElementById('comparisonInvestedBar');
             const comparisonCurrentBar = document.getElementById('comparisonCurrentBar');
 
@@ -521,18 +721,20 @@
                 heroCurrent.textContent = 'NT$ ' + formatNum(currentTotal, 0);
                 heroProfit.textContent = 'NT$ ' + formatNum(profitTotal, 0);
                 heroROI.textContent = formatROI(roiTotal);
+                heroProfitCard.classList.toggle('gain', profitTotal >= 0);
+                heroProfitCard.classList.toggle('loss', profitTotal < 0);
                 overviewHeroSubtitle.textContent = latest
-                    ? `最新日期 ${latest.date}，總投入 NT$ ${formatNum(investedTotal, 0)}，目前價值 NT$ ${formatNum(currentTotal, 0)}。`
+                    ? `最新日期 ${latest.date}，累計申購 NT$ ${formatNum(investedTotal, 0)}，目前資產價值 NT$ ${formatNum(currentTotal, 0)}。`
                     : '目前正在讀取 Google Sheets 的最新總覽資料。';
                 overviewFreshness.textContent = latest ? `最新更新 ${latest.date}` : '讀取中';
                 comparisonInvestedBar.style.width = investedWidth + '%';
                 comparisonCurrentBar.style.width = currentWidth + '%';
 
                 const cards = [
-                    { label: '總投入金額', value: 'NT$ ' + formatNum(investedTotal, 0), cls: 'gold' },
-                    { label: '目前總價值', value: 'NT$ ' + formatNum(currentTotal, 0) },
-                    { label: '損益金額', value: 'NT$ ' + formatNum(profitTotal, 0) },
-                    { label: '報酬率', value: formatROI(roiTotal) },
+                    { label: '累計申購金額', value: 'NT$ ' + formatNum(investedTotal, 0), cls: 'gold' },
+                    { label: '目前資產價值', value: 'NT$ ' + formatNum(currentTotal, 0) },
+                    { label: '未實現損益', value: 'NT$ ' + formatNum(profitTotal, 0) },
+                    { label: '整體報酬率', value: formatROI(roiTotal) },
                     { label: '當前單位淨值', value: formatNum(cv.currentNAV, 4) },
                     { label: '總資產淨值', value: 'NT$ ' + formatNum(cv.totalAsset, 0) },
                     { label: '歷史最高淨值 (HWM)', value: formatNum(cv.hwm, 4) },
@@ -578,11 +780,11 @@
                 comparisonChartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: ['總投入', '目前價值', '損益'],
+                            labels: ['累計申購', '目前資產', '未實現損益'],
                         datasets: [{
                             label: '金額 (NT$)',
                             data: [investedTotal, currentTotal, profitTotal],
-                            backgroundColor: ['#4a90d9', '#c8963e', '#69c28f'],
+                            backgroundColor: ['#1f6fb2', '#b8872f', profitTotal >= 0 ? '#16815a' : '#b84d4d'],
                             borderRadius: 6,
                             borderSkipped: false
                         }]
@@ -603,6 +805,7 @@
                             x: {
                                 beginAtZero: true,
                                 max: maxVal,
+                                min: profitTotal < 0 ? profitTotal : 0,
                                 ticks: {
                                     color: '#8a92a4',
                                     callback: v => 'NT$ ' + formatNum(v, 0)
@@ -628,12 +831,12 @@
                     type: 'pie',
                     data: {
                         labels: ['持股價值', '帳上現金'],
-                        datasets: [{ data: [stockValue, safeCash], backgroundColor: ['#4a90d9', '#c8963e'], borderColor: '#1a1f2b', borderWidth: 2 }]
+                        datasets: [{ data: [stockValue, safeCash], backgroundColor: ['#1f6fb2', '#b8872f'], borderColor: '#ffffff', borderWidth: 2 }]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
                         plugins: {
-                            legend: { position: 'bottom', labels: { color: '#b0b8c5' } },
+                            legend: { position: 'bottom', labels: { color: '#67758a' } },
                             tooltip: { callbacks: { label: (ctx) => {
                                 const pct = safeTotalAsset > 0 ? ((ctx.raw / safeTotalAsset) * 100).toFixed(1) : '0.0';
                                 return `${ctx.label}: NT$ ${formatNum(ctx.raw,0)} (${pct}%)`;
@@ -654,18 +857,18 @@
                     data: {
                         labels: dates,
                         datasets: [
-                            { label: '總資產淨值 (NT$)', data: assets, borderColor: '#4a90d9', backgroundColor: 'rgba(74,144,217,0.1)', fill: true, yAxisID: 'y', tension: 0.2, pointRadius: 1 },
-                            { label: '單位淨值', data: navs, borderColor: '#c8963e', backgroundColor: 'rgba(200,150,62,0.1)', fill: false, yAxisID: 'y1', tension: 0.2, pointRadius: 1 }
+                            { label: '總資產淨值 (NT$)', data: assets, borderColor: '#1f6fb2', backgroundColor: 'rgba(31,111,178,0.10)', fill: true, yAxisID: 'y', tension: 0.2, pointRadius: 1 },
+                            { label: '單位淨值', data: navs, borderColor: '#b8872f', backgroundColor: 'rgba(184,135,47,0.12)', fill: false, yAxisID: 'y1', tension: 0.2, pointRadius: 1 }
                         ]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
                         interaction: { mode: 'index', intersect: false },
-                        plugins: { legend: { labels: { color: '#b0b8c5' } } },
+                        plugins: { legend: { labels: { color: '#67758a' } } },
                         scales: {
-                            x: { ticks: { color: '#8a92a4' }, grid: { color: '#2f3542' } },
-                            y: { type: 'linear', position: 'left', title: { display: true, text: '總資產 (NT$)', color: '#4a90d9' }, ticks: { color: '#8a92a4', callback: v => (v/10000).toFixed(1)+'萬' }, grid: { color: '#2f3542' } },
-                            y1: { type: 'linear', position: 'right', title: { display: true, text: '單位淨值', color: '#c8963e' }, ticks: { color: '#8a92a4' }, grid: { display: false } }
+                            x: { ticks: { color: '#67758a' }, grid: { color: '#e6edf5' } },
+                            y: { type: 'linear', position: 'left', title: { display: true, text: '總資產 (NT$)', color: '#1f6fb2' }, ticks: { color: '#67758a', callback: v => (v/10000).toFixed(1)+'萬' }, grid: { color: '#e6edf5' } },
+                            y1: { type: 'linear', position: 'right', title: { display: true, text: '單位淨值', color: '#b8872f' }, ticks: { color: '#67758a' }, grid: { display: false } }
                         }
                     }
                 });
@@ -679,7 +882,7 @@
                 const series = computeMemberNavSeries(overviewData.weeklyNAV, investments);
                 overviewSection.classList.add('hidden');
                 memberSection.classList.remove('hidden');
-                memberTitle.textContent = `👤 ${memberInfo.name} 的投資歷程`;
+                memberTitle.textContent = `${memberInfo.name} 投資明細`;
                 memberSelect.value = index.toString();
                 const totalInvested = investments.reduce((s,i) => s + i.amount, 0);
                 const latest = series.length ? series[series.length-1] : null;
@@ -687,9 +890,9 @@
                 const roi = totalInvested ? ((currentValue - totalInvested) / totalInvested * 100) : 0;
                 const totalUnits = latest ? latest.cumUnits : 0;
                 memberCardsDiv.innerHTML = `
-                    <div class="card"><div class="label">總投入金額</div><div class="value">NT$ ${formatNum(totalInvested,0)}</div></div>
-                    <div class="card"><div class="label">目前淨值</div><div class="value gold">NT$ ${formatNum(currentValue,0)}</div></div>
-                    <div class="card"><div class="label">報酬率</div><div class="value">${formatNum(roi,2)}%</div></div>
+                    <div class="card"><div class="label">累計申購金額</div><div class="value">NT$ ${formatNum(totalInvested,0)}</div></div>
+                    <div class="card"><div class="label">目前資產價值</div><div class="value gold">NT$ ${formatNum(currentValue,0)}</div></div>
+                    <div class="card"><div class="label">個人報酬率</div><div class="value">${formatNum(roi,2)}%</div></div>
                     <div class="card"><div class="label">持有單位數</div><div class="value">${formatNum(totalUnits,5)}</div></div>`;
                 let cumUnits = 0;
                 memberDetailBody.innerHTML = investments.map(inv => {
@@ -717,16 +920,16 @@
                     data: {
                         labels: dates,
                         datasets: [
-                            { label: '個人資產淨值 (NT$)', data: values, borderColor: '#c8963e', backgroundColor: 'rgba(200,150,62,0.1)', fill: true, tension: 0.2, pointRadius: 1 },
-                            { label: '累計投入金額', data: cumInvested, borderColor: '#8a92a4', borderDash: [6,4], fill: false, tension: 0.2, pointRadius: 1 }
+                            { label: '個人資產價值 (NT$)', data: values, borderColor: '#b8872f', backgroundColor: 'rgba(184,135,47,0.12)', fill: true, tension: 0.2, pointRadius: 1 },
+                            { label: '累計申購金額', data: cumInvested, borderColor: '#1f6fb2', borderDash: [6,4], fill: false, tension: 0.2, pointRadius: 1 }
                         ]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { labels: { color: '#b0b8c5' } } },
+                        plugins: { legend: { labels: { color: '#67758a' } } },
                         scales: {
-                            x: { ticks: { color: '#8a92a4' }, grid: { color: '#2f3542' } },
-                            y: { ticks: { color: '#8a92a4', callback: v => (v/10000).toFixed(1)+'萬' }, grid: { color: '#2f3542' } }
+                            x: { ticks: { color: '#67758a' }, grid: { color: '#e6edf5' } },
+                            y: { ticks: { color: '#67758a', callback: v => (v/10000).toFixed(1)+'萬' }, grid: { color: '#e6edf5' } }
                         }
                     }
                 });
@@ -736,13 +939,13 @@
                 const amounts = investments.map(inv => inv.amount);
                 memberInvestmentChartInstance = new Chart(ctx2, {
                     type: 'bar',
-                    data: { labels: monthLabels, datasets: [{ label: '每月投入金額 (NT$)', data: amounts, backgroundColor: '#c8963e', borderRadius: 4 }] },
+                    data: { labels: monthLabels, datasets: [{ label: '每月申購金額 (NT$)', data: amounts, backgroundColor: '#b8872f', borderRadius: 4 }] },
                     options: {
                         responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { labels: { color: '#b0b8c5' } } },
+                        plugins: { legend: { labels: { color: '#67758a' } } },
                         scales: {
-                            x: { ticks: { color: '#8a92a4' }, grid: { color: '#2f3542' } },
-                            y: { ticks: { color: '#8a92a4', callback: v => 'NT$ '+formatNum(v,0) }, grid: { color: '#2f3542' } }
+                            x: { ticks: { color: '#67758a' }, grid: { color: '#e6edf5' } },
+                            y: { ticks: { color: '#67758a', callback: v => 'NT$ '+formatNum(v,0) }, grid: { color: '#e6edf5' } }
                         }
                     }
                 });
@@ -770,7 +973,7 @@
                     const memberPromises = CSV_URLS.members.map(m => fetchMemberInvestments(m.url));
                     membersData = await Promise.all(memberPromises);
 
-                    memberSelect.innerHTML = '<option value="">👤 團員明細</option>';
+                    memberSelect.innerHTML = '<option value="">團員明細</option>';
                     CSV_URLS.members.forEach((m, idx) => {
                         const opt = document.createElement('option');
                         opt.value = idx; opt.textContent = m.name;
