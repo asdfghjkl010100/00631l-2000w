@@ -56,7 +56,16 @@
         }
         .chart-box.small { height: 300px; }
         .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-bottom: 28px; }
-        @media (max-width: 768px) { .chart-row { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) {
+            .navbar { padding: 10px 16px; }
+            .nav-inner { height: auto; align-items: flex-start; gap: 12px; flex-direction: column; }
+            .nav-links { width: 100%; gap: 10px; }
+            .nav-links a, .nav-links select { flex: 1; min-width: 0; }
+            .chart-row { grid-template-columns: 1fr; }
+            .chart-box { height: 340px; padding: 16px; }
+            .chart-box.small { height: 280px; }
+            .card .value { font-size: 1.45rem; overflow-wrap: anywhere; }
+        }
         .chart-box canvas { width: 100%; height: 100%; }
         .table-wrapper {
             background: #222837; border-radius: 10px; border: 1px solid #2f3542;
@@ -167,33 +176,56 @@
             const loadingMsg = document.getElementById('loadingMsg');
             const navOverview = document.getElementById('navOverview');
 
-            // ========== 替換 1：升級 parseCSV（正確處理雙引號） ==========
             function parseCSV(text) {
                 const rows = [];
-                const lines = text.split('\n');
-                for (let line of lines) {
-                    line = line.trim();
-                    if (line === '') continue;
-                    
-                    let cols = [];
-                    let current = '';
-                    let inQuotes = false;
-                    for (let i = 0; i < line.length; i++) {
-                        const char = line[i];
-                        if (char === '"') {
-                            inQuotes = !inQuotes;
-                        } else if (char === ',' && !inQuotes) {
-                            cols.push(current.trim());
-                            current = '';
+                let row = [];
+                let current = '';
+                let inQuotes = false;
+
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    const next = text[i + 1];
+
+                    if (char === '"') {
+                        if (inQuotes && next === '"') {
+                            current += '"';
+                            i++;
                         } else {
-                            current += char;
+                            inQuotes = !inQuotes;
                         }
+                    } else if (char === ',' && !inQuotes) {
+                        row.push(current.trim());
+                        current = '';
+                    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                        if (char === '\r' && next === '\n') i++;
+                        row.push(current.trim());
+                        if (row.some(cell => cell !== '')) rows.push(row);
+                        row = [];
+                        current = '';
+                    } else {
+                        current += char;
                     }
-                    cols.push(current.trim());
-                    cols = cols.map(c => c.replace(/^"|"$/g, ''));
-                    rows.push(cols);
                 }
+
+                row.push(current.trim());
+                if (row.some(cell => cell !== '')) rows.push(row);
                 return rows;
+            }
+
+            function escapeHTML(value) {
+                return String(value ?? '').replace(/[&<>"']/g, char => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[char]));
+            }
+
+            function parseDateKey(dateStr) {
+                const parts = String(dateStr).trim().split('/').map(Number);
+                if (parts.length !== 3 || parts.some(Number.isNaN)) return 0;
+                return parts[0] * 10000 + parts[1] * 100 + parts[2];
             }
 
             function safeParseFloat(str) {
@@ -215,11 +247,15 @@
                 return formatNum(roi, 2) + '%';
             }
 
+            async function fetchCSV(url) {
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                return parseCSV(await resp.text());
+            }
+
             // 核心數值 (保持原始簡單讀取)
             async function fetchCoreValues() {
-                const resp = await fetch(CSV_URLS.coreValues);
-                const text = await resp.text();
-                const rows = parseCSV(text);
+                const rows = await fetchCSV(CSV_URLS.coreValues);
                 const values = {};
                 for (let i = 0; i < rows.length; i++) {
                     const cols = rows[i];
@@ -240,11 +276,8 @@
                 };
             }
 
-            // ========== 替換 2：更新 fetchMemberSummary（存名字 + 寬鬆欄位） ==========
             async function fetchMemberSummary() {
-                const resp = await fetch(CSV_URLS.memberSummary);
-                const text = await resp.text();
-                const rows = parseCSV(text);
+                const rows = await fetchCSV(CSV_URLS.memberSummary);
                 const summary = [];
                 for (let i = 1; i < rows.length; i++) {
                     const cols = rows[i];
@@ -264,9 +297,7 @@
 
             // 每週淨值
             async function fetchWeeklyNAV() {
-                const resp = await fetch(CSV_URLS.overview);
-                const text = await resp.text();
-                const rows = parseCSV(text);
+                const rows = await fetchCSV(CSV_URLS.overview);
                 const weeklyNAV = [];
                 for (let i = 0; i < rows.length; i++) {
                     const cols = rows[i];
@@ -277,15 +308,13 @@
                     const invested = safeParseFloat(cols[2]);
                     const nav = safeParseFloat(cols[3]);
                     if (isNaN(asset) || isNaN(invested) || isNaN(nav)) continue;
-                    weeklyNAV.push({ date: dateStr, asset, invested, nav });
+                    weeklyNAV.push({ date: dateStr, dateKey: parseDateKey(dateStr), asset, invested, nav });
                 }
-                return weeklyNAV;
+                return weeklyNAV.sort((a, b) => a.dateKey - b.dateKey);
             }
 
             async function fetchMemberInvestments(url) {
-                const resp = await fetch(url);
-                const text = await resp.text();
-                const rows = parseCSV(text);
+                const rows = await fetchCSV(url);
                 const investments = [];
                 for (let i = 0; i < rows.length; i++) {
                     const cols = rows[i];
@@ -297,26 +326,26 @@
                         if (!isNaN(amount) && !isNaN(nav)) {
                             const units = cols.length >= 4 ? safeParseFloat(cols[3]) : amount / nav;
                             investments.push({
-                                date: dateStr, amount, nav,
+                                date: dateStr, dateKey: parseDateKey(dateStr), amount, nav,
                                 units: isNaN(units) ? amount / nav : units
                             });
                         }
                     }
                 }
-                return investments;
+                return investments.sort((a, b) => a.dateKey - b.dateKey);
             }
 
             function computeMemberNavSeries(weeklyNAV, investments) {
                 if (!weeklyNAV.length || !investments.length) return [];
-                const sorted = [...investments].sort((a, b) => a.date.localeCompare(b.date));
+                const sorted = [...investments].sort((a, b) => a.dateKey - b.dateKey);
                 const series = [];
                 let cumUnits = 0, invIdx = 0;
                 for (let w of weeklyNAV) {
-                    while (invIdx < sorted.length && sorted[invIdx].date <= w.date) {
+                    while (invIdx < sorted.length && sorted[invIdx].dateKey <= w.dateKey) {
                         cumUnits += sorted[invIdx].units;
                         invIdx++;
                     }
-                    series.push({ date: w.date, nav: w.nav, cumUnits, value: cumUnits * w.nav });
+                    series.push({ date: w.date, dateKey: w.dateKey, nav: w.nav, cumUnits, value: cumUnits * w.nav });
                 }
                 return series;
             }
@@ -336,14 +365,13 @@
                     `<div class="card"><div class="label">${c.label}</div><div class="value ${c.cls||''}">${c.value}</div></div>`
                 ).join('');
 
-                // ========== 替換 3：更新表格渲染（使用 CSV 名字 + 格式化） ==========
                 const memberNames = CSV_URLS.members.map(m => m.name);
                 memberSummaryBody.innerHTML = memberSummaryData.map((m, idx) => {
                     const name = m.name || memberNames[idx] || `成員${idx+1}`;
                     const roiStr = !isNaN(m.roi) ? formatROI(m.roi) : '--';
                     const monthlyStr = !isNaN(m.monthly) ? 'NT$ ' + formatNum(m.monthly, 0) : '--';
                     return `<tr class="clickable-row" data-member-index="${idx}">
-                        <td>${name}</td>
+                        <td>${escapeHTML(name)}</td>
                         <td>NT$ ${formatNum(m.invested, 0)}</td>
                         <td>${formatNum(m.units, 5)}</td>
                         <td>NT$ ${formatNum(m.value, 0)}</td>
@@ -365,18 +393,23 @@
             function drawPieChart(totalAsset, cash) {
                 const ctx = document.getElementById('pieChart').getContext('2d');
                 if (pieChartInstance) pieChartInstance.destroy();
-                const stockValue = totalAsset - cash;
+                const safeTotalAsset = Math.max(totalAsset || 0, 0);
+                const safeCash = Math.max(cash || 0, 0);
+                const stockValue = Math.max(safeTotalAsset - safeCash, 0);
                 pieChartInstance = new Chart(ctx, {
                     type: 'pie',
                     data: {
                         labels: ['持股價值', '帳上現金'],
-                        datasets: [{ data: [stockValue, cash], backgroundColor: ['#4a90d9', '#c8963e'], borderColor: '#1a1f2b', borderWidth: 2 }]
+                        datasets: [{ data: [stockValue, safeCash], backgroundColor: ['#4a90d9', '#c8963e'], borderColor: '#1a1f2b', borderWidth: 2 }]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
                         plugins: {
                             legend: { position: 'bottom', labels: { color: '#b0b8c5' } },
-                            tooltip: { callbacks: { label: (ctx) => `${ctx.label}: NT$ ${formatNum(ctx.raw,0)} (${((ctx.raw/totalAsset)*100).toFixed(1)}%)` } }
+                            tooltip: { callbacks: { label: (ctx) => {
+                                const pct = safeTotalAsset > 0 ? ((ctx.raw / safeTotalAsset) * 100).toFixed(1) : '0.0';
+                                return `${ctx.label}: NT$ ${formatNum(ctx.raw,0)} (${pct}%)`;
+                            } } }
                         }
                     }
                 });
@@ -446,7 +479,7 @@
                 const cumInvested = [];
                 let totalInv = 0, invIdx = 0;
                 for (let s of series) {
-                    while (invIdx < investments.length && investments[invIdx].date <= s.date) {
+                    while (invIdx < investments.length && investments[invIdx].dateKey <= s.dateKey) {
                         totalInv += investments[invIdx].amount; invIdx++;
                     }
                     cumInvested.push(totalInv);
@@ -527,7 +560,7 @@
                     navOverview.addEventListener('click', (e) => { e.preventDefault(); backToOverview(); });
                     backBtn.addEventListener('click', backToOverview);
                 } catch (err) {
-                    loadingMsg.innerHTML = `<div class="error">⚠️ 資料讀取失敗：${err.message}。請確認試算表已發布且網路正常。</div>`;
+                    loadingMsg.innerHTML = `<div class="error">⚠️ 資料讀取失敗：${escapeHTML(err.message)}。請確認試算表已發布且網路正常。</div>`;
                     console.error(err);
                 }
             }
