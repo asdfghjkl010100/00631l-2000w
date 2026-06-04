@@ -41,6 +41,101 @@
             font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;
             color: #f0f0f0; border-left: 4px solid #c8963e; padding-left: 14px;
         }
+        .hero-snapshot {
+            background: linear-gradient(135deg, rgba(42,49,64,0.96), rgba(34,40,55,0.98));
+            border: 1px solid #394152;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 24px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.24);
+        }
+        .hero-snapshot-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        .hero-eyebrow { color: #8a92a4; font-size: 0.8rem; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+        .hero-title { font-size: 1.25rem; font-weight: 800; color: #f3f6fb; line-height: 1.2; }
+        .hero-subtitle { color: #b0b8c5; font-size: 0.92rem; margin-top: 6px; }
+        .hero-badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            background: rgba(200,150,62,0.14);
+            color: #e8c06a;
+            border: 1px solid rgba(200,150,62,0.35);
+            white-space: nowrap;
+        }
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .hero-stat {
+            background: rgba(26,31,43,0.88);
+            border: 1px solid #384052;
+            border-radius: 10px;
+            padding: 14px 14px 13px;
+            min-width: 0;
+        }
+        .hero-stat .label { font-size: 0.78rem; color: #8a92a4; margin-bottom: 8px; }
+        .hero-stat .value { font-size: 1.5rem; font-weight: 800; color: #fff; line-height: 1.1; }
+        .hero-stat .delta { margin-top: 8px; font-size: 0.82rem; color: #9ea6b7; }
+        .hero-stat.current .value { color: #69c28f; }
+        .hero-stat.gain .value { color: #e8c06a; }
+        .hero-stat.loss .value { color: #e06c75; }
+        .hero-comparison {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 14px;
+            align-items: center;
+        }
+        .comparison-bar {
+            position: relative;
+            height: 16px;
+            background: #111723;
+            border: 1px solid #384052;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .comparison-bar .invested,
+        .comparison-bar .current {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+        }
+        .comparison-bar .invested {
+            left: 0;
+            background: linear-gradient(90deg, #4a90d9, #6db1ff);
+        }
+        .comparison-bar .current {
+            left: 0;
+            background: linear-gradient(90deg, #c8963e, #e7c05f);
+            opacity: 0.88;
+        }
+        .comparison-legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            font-size: 0.82rem;
+            color: #b0b8c5;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-swatch {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            flex: 0 0 auto;
+        }
         .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
         .card {
             background: #222837; border: 1px solid #2f3542; border-radius: 10px;
@@ -55,12 +150,16 @@
             padding: 20px; margin-bottom: 28px; position: relative; height: 420px;
         }
         .chart-box.small { height: 300px; }
-        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-bottom: 28px; }
+        .chart-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; margin-bottom: 28px; }
         @media (max-width: 768px) {
             .navbar { padding: 10px 16px; }
             .nav-inner { height: auto; align-items: flex-start; gap: 12px; flex-direction: column; }
             .nav-links { width: 100%; gap: 10px; }
             .nav-links a, .nav-links select { flex: 1; min-width: 0; }
+            .hero-snapshot-head { flex-direction: column; }
+            .hero-grid { grid-template-columns: 1fr 1fr; }
+            .hero-comparison { grid-template-columns: 1fr; }
+            .comparison-legend { justify-content: flex-start; }
             .chart-row { grid-template-columns: 1fr; }
             .chart-box { height: 340px; padding: 16px; }
             .chart-box.small { height: 280px; }
@@ -106,10 +205,53 @@
 
     <div class="container" id="app">
         <div id="overviewSection" class="hidden">
+            <div class="hero-snapshot" id="overviewHero">
+                <div class="hero-snapshot-head">
+                    <div>
+                        <div class="hero-eyebrow">Google Sheets Live Summary</div>
+                        <div class="hero-title">投入、目前價值、損益，一眼就能看懂</div>
+                        <div class="hero-subtitle" id="overviewHeroSubtitle">載入最新資料後，會顯示總投入、目前價值與差額。</div>
+                    </div>
+                    <div class="hero-badge" id="overviewFreshness">資料更新中</div>
+                </div>
+                <div class="hero-grid" id="heroStats">
+                    <div class="hero-stat">
+                        <div class="label">總投入金額</div>
+                        <div class="value" id="heroInvested">--</div>
+                        <div class="delta" id="heroInvestedDelta">來自 Google Sheets</div>
+                    </div>
+                    <div class="hero-stat current">
+                        <div class="label">目前總價值</div>
+                        <div class="value" id="heroCurrent">--</div>
+                        <div class="delta" id="heroCurrentDelta">當前市值 / 淨值換算</div>
+                    </div>
+                    <div class="hero-stat gain">
+                        <div class="label">損益金額</div>
+                        <div class="value" id="heroProfit">--</div>
+                        <div class="delta" id="heroProfitDelta">目前價值 - 投入金額</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="label">報酬率</div>
+                        <div class="value" id="heroROI">--</div>
+                        <div class="delta" id="heroROIDelta">整體報酬表現</div>
+                    </div>
+                </div>
+                <div class="hero-comparison">
+                    <div class="comparison-bar" aria-label="投入與目前價值比較">
+                        <div class="invested" id="comparisonInvestedBar"></div>
+                        <div class="current" id="comparisonCurrentBar"></div>
+                    </div>
+                    <div class="comparison-legend">
+                        <span class="legend-item"><span class="legend-swatch" style="background:#4a90d9"></span>總投入</span>
+                        <span class="legend-item"><span class="legend-swatch" style="background:#c8963e"></span>目前價值</span>
+                    </div>
+                </div>
+            </div>
             <div class="section-title">📊 基金總覽</div>
             <div class="cards" id="overviewCards"></div>
             <div class="chart-row">
                 <div class="chart-box small"><canvas id="pieChart"></canvas></div>
+                <div class="chart-box small"><canvas id="comparisonChart"></canvas></div>
                 <div class="chart-box small"><canvas id="overviewChart"></canvas></div>
             </div>
             <div class="section-title">👥 團員績效摘要</div>
@@ -161,6 +303,7 @@
             let currentMemberIndex = -1;
             let overviewChartInstance = null;
             let pieChartInstance = null;
+            let comparisonChartInstance = null;
             let memberNavChartInstance = null;
             let memberInvestmentChartInstance = null;
 
@@ -175,6 +318,19 @@
             const memberDetailBody = document.querySelector('#memberDetailTable tbody');
             const loadingMsg = document.getElementById('loadingMsg');
             const navOverview = document.getElementById('navOverview');
+            const overviewHeroSubtitle = document.getElementById('overviewHeroSubtitle');
+            const overviewFreshness = document.getElementById('overviewFreshness');
+            const heroInvested = document.getElementById('heroInvested');
+            const heroCurrent = document.getElementById('heroCurrent');
+            const heroProfit = document.getElementById('heroProfit');
+            const heroROI = document.getElementById('heroROI');
+            const comparisonInvestedBar = document.getElementById('comparisonInvestedBar');
+            const comparisonCurrentBar = document.getElementById('comparisonCurrentBar');
+
+            function getLatestOverviewSnapshot() {
+                if (!overviewData || !overviewData.weeklyNAV || !overviewData.weeklyNAV.length) return null;
+                return overviewData.weeklyNAV[overviewData.weeklyNAV.length - 1];
+            }
 
             function parseCSV(text) {
                 const rows = [];
@@ -352,8 +508,32 @@
 
             function renderOverview() {
                 const cv = coreValues;
+                const latest = getLatestOverviewSnapshot();
+                const investedTotal = latest ? latest.invested : cv.totalAsset;
+                const currentTotal = latest ? latest.asset : cv.totalAsset;
+                const profitTotal = currentTotal - investedTotal;
+                const roiTotal = investedTotal ? (profitTotal / investedTotal) * 100 : NaN;
+                const scale = Math.max(investedTotal || 0, currentTotal || 0, 1);
+                const investedWidth = Math.max((investedTotal / scale) * 100, 8);
+                const currentWidth = Math.max((currentTotal / scale) * 100, 8);
+
+                heroInvested.textContent = 'NT$ ' + formatNum(investedTotal, 0);
+                heroCurrent.textContent = 'NT$ ' + formatNum(currentTotal, 0);
+                heroProfit.textContent = 'NT$ ' + formatNum(profitTotal, 0);
+                heroROI.textContent = formatROI(roiTotal);
+                overviewHeroSubtitle.textContent = latest
+                    ? `最新日期 ${latest.date}，總投入 NT$ ${formatNum(investedTotal, 0)}，目前價值 NT$ ${formatNum(currentTotal, 0)}。`
+                    : '目前正在讀取 Google Sheets 的最新總覽資料。';
+                overviewFreshness.textContent = latest ? `最新更新 ${latest.date}` : '讀取中';
+                comparisonInvestedBar.style.width = investedWidth + '%';
+                comparisonCurrentBar.style.width = currentWidth + '%';
+
                 const cards = [
-                    { label: '當前單位淨值', value: formatNum(cv.currentNAV, 4), cls: 'gold' },
+                    { label: '總投入金額', value: 'NT$ ' + formatNum(investedTotal, 0), cls: 'gold' },
+                    { label: '目前總價值', value: 'NT$ ' + formatNum(currentTotal, 0) },
+                    { label: '損益金額', value: 'NT$ ' + formatNum(profitTotal, 0) },
+                    { label: '報酬率', value: formatROI(roiTotal) },
+                    { label: '當前單位淨值', value: formatNum(cv.currentNAV, 4) },
                     { label: '總資產淨值', value: 'NT$ ' + formatNum(cv.totalAsset, 0) },
                     { label: '歷史最高淨值 (HWM)', value: formatNum(cv.hwm, 4) },
                     { label: '最大回撤', value: formatNum(cv.maxDrawdown, 2) + '%' },
@@ -387,7 +567,55 @@
                 });
 
                 drawPieChart(cv.totalAsset, cv.cash);
+                drawComparisonChart(investedTotal, currentTotal, profitTotal);
                 drawOverviewChart(overviewData.weeklyNAV, cv.hwm);
+            }
+
+            function drawComparisonChart(investedTotal, currentTotal, profitTotal) {
+                const ctx = document.getElementById('comparisonChart').getContext('2d');
+                if (comparisonChartInstance) comparisonChartInstance.destroy();
+                const maxVal = Math.max(investedTotal, currentTotal, 1);
+                comparisonChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['總投入', '目前價值', '損益'],
+                        datasets: [{
+                            label: '金額 (NT$)',
+                            data: [investedTotal, currentTotal, profitTotal],
+                            backgroundColor: ['#4a90d9', '#c8963e', '#69c28f'],
+                            borderRadius: 6,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => 'NT$ ' + formatNum(ctx.raw, 0)
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: maxVal,
+                                ticks: {
+                                    color: '#8a92a4',
+                                    callback: v => 'NT$ ' + formatNum(v, 0)
+                                },
+                                grid: { color: '#2f3542' }
+                            },
+                            y: {
+                                ticks: { color: '#b0b8c5' },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
             }
 
             function drawPieChart(totalAsset, cash) {
