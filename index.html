@@ -182,7 +182,7 @@ function PC(t){return t.trim().split('\n').map(r=>{let c=[],s='',q=!1;for(let ch
 function EH(s){let d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function PD(s){if(!s)return 0;let p=String(s).trim().split('/').map(Number);return p[0]*10000+p[1]*100+p[2]}
 function SF(v){let n=parseFloat(String(v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
-function FN(n,d){if(n==null||isNaN(n))return'--';if(Math.abs(n)>=1e8)return(n/1e8).toFixed(d)+'億';if(Math.abs(n)>=1e4)return(n/1e4).toFixed(d)+'萬';return n.toFixed(d)}
+function FN(n,d){if(n==null||isNaN(n))return'--';if(Math.abs(n)>=1e8)return(n/1e8).toFixed(d)+'億';if(Math.abs(n)>=1e6)return(n/1e4).toFixed(d)+'萬';return n.toFixed(d)}
 function FR(n){if(n==null||isNaN(n))return'--';return(n>=0?'+':'')+n.toFixed(2)+'%'}
 
 // ========================
@@ -200,7 +200,7 @@ async function loadAllData(){
   
     const t1=await FC(CSV.core),r1=PC(t1);
     const cvMap={};r1.forEach(r=>{if(r[0])cvMap[String(r[0]).trim()]=SF(r[1])});
-    const cv={ta:cvMap['合資總資產']||0,ca:cvMap['帳上現金']||0,sv:0,sd:'2025/12/21',ti:cvMap['帳上現金']||0};
+    const cv={ta:cvMap['合資總資產']||0,ca:cvMap['帳上現金']||0,sv:(cvMap['00631L 現價']||0)*(cvMap['合資總持股數']||0),sd:'2025/12/21',ti:cvMap['帳上現金']||0};
     
     const t2=await FC(CSV.ms),r2=PC(t2),msd=[];
     for(let i=1;i<r2.length;i++){let c=r2[i];if(c.length<6)continue;msd.push({n:c[0],i:SF(c[1]),u:SF(c[2]),v:SF(c[3]),r:SF(c[4]),m:SF(c[5])})}
@@ -258,7 +258,7 @@ function RO(cv,msd,wn){
 function DP(ca,st){let ctx=document.getElementById('pieChart').getContext('2d');if(pci)pci.destroy();pci=new Chart(ctx,{type:'doughnut',data:{labels:['現金','股票曝險 (00631L)'],datasets:[{data:[ca,st],backgroundColor:['#4a90d9','#c8963e'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#5a6a7e',font:{size:12}}}}}})}
 function DC(i,c){let ctx=document.getElementById('comparisonChart').getContext('2d');if(cci)cci.destroy();cci=new Chart(ctx,{type:'bar',data:{labels:['累計申購','目前資產'],datasets:[{data:[i,c],backgroundColor:['#4a90d9','#c8963e'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:'#8a9bb5',callback:v=>FN(v,0)},grid:{color:'#f0f2f5'}},x:{ticks:{color:'#5a6a7e'}}}}})}
 function DO(w){let ctx=document.getElementById('overviewChart').getContext('2d');if(oci)oci.destroy();if(!w||!w.length)return;oci=new Chart(ctx,{type:'line',data:{labels:w.map(s=>s.d),datasets:[{label:'總資產價值',data:w.map(s=>s.a),borderColor:'#c8963e',backgroundColor:'rgba(200,150,62,0.1)',fill:true,tension:0.2,pointRadius:2},{label:'累計申購金額',data:w.map(s=>s.i),borderColor:'#4a90d9',borderDash:[5,4],fill:false,tension:0.2,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5',font:{size:10}},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>FN(v,0)},grid:{color:'#f0f2f5'}}}}})}
-function DI(w){let ctx=document.getElementById('indexCompareChart').getContext('2d');if(icci)icci.destroy();if(!w||!w.length)return;let ch=w.map((s,i)=>{if(i===0)return 0;let p=w[i-1].a;return p>0?((s.a-p)/p)*100:0});icci=new Chart(ctx,{type:'bar',data:{labels:w.map(s=>s.d),datasets:[{label:'週變化率 (%)',data:ch,backgroundColor:ch.map(v=>v>=0?'rgba(39,174,96,0.7)':'rgba(231,76,60,0.7)'),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5',font:{size:10}},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>v+'%'},grid:{color:'#f0f2f5'}}}}})}
+function DI(w){let ctx=document.getElementById('indexCompareChart').getContext('2d');if(icci)icci.destroy();if(!w||!w.length)return;let ch=w.map((s,i)=>{if(i===0)return 0;let p=w[i-1].a;return p>0?((s.a-p)/p)*100:0});icci=new Chart(ctx,{type:'bar',data:{labels:w.map(s=>s.d),datasets:[{label:'週變化率 (%)',data:ch,backgroundColor:ch.map(v=>v>=0?'rgba(231,76,60,0.7)':'rgba(39,174,96,0.7)'),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5',font:{size:10}},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>v+'%'},grid:{color:'#f0f2f5'}}}}})}
 function DN(w){let ctx=document.getElementById('navChart').getContext('2d');if(nci)nci.destroy();if(!w||!w.length)return;nci=new Chart(ctx,{type:'line',data:{labels:w.map(s=>s.d),datasets:[{label:'每單位淨值 (NT$)',data:w.map(s=>s.n||0),borderColor:'#1a56db',backgroundColor:'rgba(26,86,219,0.08)',fill:true,tension:0.2,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5',font:{size:10}},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>'NT$ '+v.toFixed(2)},grid:{color:'#f0f2f5'}}}}})}
 
 function SM(i,md,msd){
