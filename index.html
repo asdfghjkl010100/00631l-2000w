@@ -206,7 +206,7 @@ async function loadAllData(){
     for(let i=1;i<r2.length;i++){let c=r2[i];if(c.length<6)continue;msd.push({n:c[0],i:SF(c[1]),u:SF(c[2]),v:SF(c[3]),r:SF(c[4]),m:SF(c[5])})}
     
     const t3=await FC(CSV.wn),r3=PC(t3),wn=[];
-    for(let i=1;i<r3.length;i++){let c=r3[i],ds=c[0].trim();if(!/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds))continue;wn.push({d:ds,dk:PD(ds),a:SF(c[1]),i:SF(c[2]),n:SF(c[3])})}
+    for(let i=1;i<r3.length;i++){let c=r3[i],ds=c[0].trim();if(!/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds))continue;let a=SF(c[1]);if(!a)continue;wn.push({d:ds,dk:PD(ds),a:a,i:SF(c[2]),n:SF(c[3])})}
     
     const md=[];let loaded=0;for(const m of CSV.mb){const t=await FC(m.u),r=PC(t),iv=[];let cum=0;for(let i=1;i<r.length;i++){let c=r[i],ds=c[0].trim();if(/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds)&&SF(c[1])>0){cum+=SF(c[3]);iv.push({d:ds,dk:PD(ds),a:SF(c[1]),n:SF(c[2]),u:SF(c[3]),cu:cum})}}md.push(iv)}
     return {cv,msd,wn,md};
