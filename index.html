@@ -209,15 +209,7 @@ async function loadAllData(){
     for(let i=1;i<r3.length;i++){let c=r3[i],ds=c[0].trim();if(!/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds))continue;wn.push({d:ds,dk:PD(ds),a:SF(c[1]),i:SF(c[2]),n:SF(c[3])})}
     
     const md=[];for(const m of CSV.mb){const t=await FC(m.u),r=PC(t),iv=[];let cum=0;for(let i=1;i<r.length;i++){let c=r[i],ds=c[0].trim();if(/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds)&&SF(c[1])>0){cum+=SF(c[3]);iv.push({d:ds,dk:PD(ds),a:SF(c[1]),n:SF(c[2]),u:SF(c[3]),cu:cum})}}md.push(iv)}
-    return {cv,msd,wn,md};    const r1=data.core[1]||data.core[0]||[];
-    const cv={ta:SF(r1[0]),ca:SF(r1[1]),sv:SF(r1[2]),sd:String(r1[3]||''),ti:SF(r1[4])};
-    
-    const msd=parseRows(data.members).map(r=>({n:String(r[0]),i:r[1],u:r[2],v:r[3],r:r[4],m:r[5]}));
-    const wn=parseRows(data.weekly).map(r=>{const ds=String(r[0]);return{d:ds,dk:PD(ds),a:r[1],i:r[2],n:r[3]}}).filter(x=>x.dk>0);
-    
-    const md=[data.member1,data.member2].map(rows=>parseRows(rows).map(r=>{const ds=String(r[0]);return{d:ds,dk:PD(ds),a:r[1],n:r[2],u:r[3],cu:r[4]}}).filter(x=>x.dk>0));
     return {cv,msd,wn,md};
-  }
 }
 
 // ========================
@@ -313,6 +305,9 @@ init();
 </script>
 </body>
 </html>
+
+
+
 
 
 
