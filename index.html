@@ -83,7 +83,7 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
 </head>
 <body>
 <nav class="navbar"><div class="nav-inner">
-<div class="logo">合資定期定額 · 台股國運基金 </div>
+<div class="logo">合資定期定額 · 台股���運基金 </div>
 <div class="nav-links">
 <a href="#" id="navOverview">總覽</a>
 <select id="memberSelect"><option value="">團員明細</option></select>
@@ -188,7 +188,7 @@ function FR(n){if(n==null||isNaN(n))return'--';return(n>=0?'+':'')+n.toFixed(2)+
 // ========================
 //  資料擷取（依模式切換）
 // ========================
-async function FC(u){return await(await fetch(u,{cache:'no-store'})).text()}
+async function FC(u){let s=new AbortController();let t=setTimeout(()=>s.abort(),15000);try{let r=await fetch(u,{cache:'no-store',signal:s.signal});clearTimeout(t);return await r.text()}catch(e){clearTimeout(t);throw e}}
 
 async function fetchJSON(url){
   const r=await fetch(url);
@@ -208,7 +208,7 @@ async function loadAllData(){
     const t3=await FC(CSV.wn),r3=PC(t3),wn=[];
     for(let i=1;i<r3.length;i++){let c=r3[i],ds=c[0].trim();if(!/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds))continue;wn.push({d:ds,dk:PD(ds),a:SF(c[1]),i:SF(c[2]),n:SF(c[3])})}
     
-    const md=[];for(const m of CSV.mb){const t=await FC(m.u),r=PC(t),iv=[];let cum=0;for(let i=1;i<r.length;i++){let c=r[i],ds=c[0].trim();if(/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds)&&SF(c[1])>0){cum+=SF(c[3]);iv.push({d:ds,dk:PD(ds),a:SF(c[1]),n:SF(c[2]),u:SF(c[3]),cu:cum})}}md.push(iv)}
+    const md=[];let loaded=0;for(const m of CSV.mb){const t=await FC(m.u),r=PC(t),iv=[];let cum=0;for(let i=1;i<r.length;i++){let c=r[i],ds=c[0].trim();if(/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds)&&SF(c[1])>0){cum+=SF(c[3]);iv.push({d:ds,dk:PD(ds),a:SF(c[1]),n:SF(c[2]),u:SF(c[3]),cu:cum})}}md.push(iv)}
     return {cv,msd,wn,md};
 }
 
@@ -299,7 +299,7 @@ async function init(){
     
     RO(cv,msd,wn);
     LM.style.display='none';
-  }catch(e){LM.innerHTML='<div class="error">⚠️ 資料讀取失敗：'+EH(e.message)+'。請確認後端已啟動或網路正常。</div>';console.error(e)}
+  }catch(e){console.error(e);LM.innerHTML='<div style="color:#e74c3c;font-size:16px;font-weight:600">⚠️ 資料讀取失敗</div><div style="color:#8a9bb5;font-size:13px;margin-top:4px">'+EH(e.message)+'</div><br><button onclick="location.reload()" style="padding:8px 24px;background:#1a56db;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px">重新載入</button>';}
 }
 init();
 </script>
