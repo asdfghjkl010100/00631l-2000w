@@ -63,6 +63,8 @@ def push_message(text: str):
 def callback():
     signature = request.headers.get('X-Line-Signature', '')
     body = request.get_data(as_text=True)
+    import sys
+    print(f'[Webhook] Body: {body}', file=sys.stderr)
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
