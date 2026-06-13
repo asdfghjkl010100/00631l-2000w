@@ -84,9 +84,11 @@ def callback():
     return "OK"
 
 
+CHECK_COUNT = 0
+
 @app.route("/health", methods=["GET"])
 def health():
-    return {"status": "ok", "message": "台股國運基金 LINE Bot 運行中"}
+    return {"status": "ok", "message": "台股國運基金 LINE Bot 運行中", "checks": CHECK_COUNT}
 
 
 @handler.add(MessageEvent, message=TextMessageContent)
@@ -108,6 +110,8 @@ def handle_text_message(event):
 #  定期監控
 # ===================
 def check_for_updates():
+    global CHECK_COUNT
+    CHECK_COUNT += 1
     try:
         new_fp = compute_cache_fingerprint()
     except Exception as e:
