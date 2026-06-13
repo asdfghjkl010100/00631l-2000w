@@ -1,0 +1,17 @@
+# -*- mode: yaml -*-
+# Render.com 部署設定
+services:
+  - type: web
+    name: 00631l-linebot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn line_bot.app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4
+    envVars:
+      - key: LINE_CHANNEL_ACCESS_TOKEN
+        sync: false
+      - key: LINE_CHANNEL_SECRET
+        sync: false
+      - key: LINE_GROUP_ID
+        sync: false
+      - key: MONITOR_INTERVAL
+        value: "300"
