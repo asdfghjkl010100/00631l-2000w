@@ -88,7 +88,9 @@ CHECK_COUNT = 0
 
 @app.route("/health", methods=["GET"])
 def health():
-    return {"status": "ok", "message": "台股國運基金 LINE Bot 運行中", "checks": CHECK_COUNT}
+    import time
+    since = f"{time.time() - LAST_CHECK:.0f}秒前" if LAST_CHECK else "尚未執行"
+    return {"status": "ok", "checks": CHECK_COUNT, "last": since, "sheets": DEBUG_SHEETS}
 
 
 @handler.add(MessageEvent, message=TextMessageContent)
@@ -110,11 +112,12 @@ def handle_text_message(event):
 #  定期監控
 # ===================
 def check_for_updates():
-    global CHECK_COUNT
+    global CHECK_COUNT, DEBUG_SHEETS
     CHECK_COUNT += 1
     try:
         new_fp = compute_cache_fingerprint()
     except Exception as e:
+        DEBUG_SHEETS = f"指紋錯誤：{e}"
         print(f"[Monitor] 無法取得指紋：{e}", file=sys.stderr)
         return
     cache = load_cache()
@@ -138,14 +141,19 @@ def check_for_updates():
         print(f"[Monitor] 快取更新失敗：{e}", file=sys.stderr)
 
 
+LAST_CHECK = None
+DEBUG_SHEETS = "未測試"
+
 def _run_loop():
     import time
+    global LAST_CHECK
     print(f"[Monitor] 排程器啟動，每 {Config.MONITOR_INTERVAL_SECONDS} 秒檢查一次", file=sys.stderr)
     while True:
         try:
             check_for_updates()
-        except:
-            pass
+        except Exception as ex:
+            print(f"[Monitor] 執行錯誤：{ex}", file=sys.stderr)
+        LAST_CHECK = time.time()
         time.sleep(Config.MONITOR_INTERVAL_SECONDS)
 
 def start_scheduler():
