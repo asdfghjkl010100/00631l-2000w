@@ -1,6 +1,8 @@
 """LINE Bot — 自動推播 + 查詢指令"""
 import sys
 import os
+import json
+from datetime import datetime, timedelta
 from flask import Flask, request, abort
 from linebot.v3 import WebhookHandler
 from linebot.v3.messaging import ApiClient, Configuration, MessagingApi, ReplyMessageRequest, PushMessageRequest, TextMessage
@@ -26,6 +28,48 @@ def push_message(text: str):
 
 
 # ===================
+#  上周快照管理
+# ===================
+WEEKLY_FILE = "weekly_snapshot.json"
+
+
+def load_weekly_snapshot() -> dict | None:
+    if os.path.exists(WEEKLY_FILE):
+        try:
+            with open(WEEKLY_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return None
+
+
+def save_weekly_snapshot(cv: dict):
+    data = {"timestamp": datetime.now().isoformat(), "cv": cv}
+    with open(WEEKLY_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
+    print("[Weekly] 已儲存本周快照", file=sys.stderr)
+
+
+def maybe_rotate_weekly(cv: dict):
+    """每週一儲存快照作為上周基準"""
+    snap = load_weekly_snapshot()
+    if snap is None:
+        save_weekly_snapshot(cv)
+        return
+    saved = datetime.fromisoformat(snap["timestamp"])
+    # 如果距離上次儲存超過 6 天，更新快照
+    if datetime.now() - saved > timedelta(days=6):
+        save_weekly_snapshot(cv)
+
+
+def get_weekly_cv() -> dict | None:
+    snap = load_weekly_snapshot()
+    if snap:
+        return snap.get("cv")
+    return None
+
+
+# ===================
 #  Webhook
 # ===================
 @app.route("/callback", methods=["POST"])
@@ -47,19 +91,16 @@ def health():
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_text_message(event):
-    """只處理「查詢」指令"""
     text = event.message.text.strip()
     if text in ("查詢", "狀態", "總覽", "status"):
         try:
             data = fetch_all_data()
-            msg = build_status_message(data["cv"], data["msd"])
+            weekly = get_weekly_cv()
+            msg = build_status_message(data["cv"], data["msd"], weekly=weekly)
         except Exception as e:
             msg = f"⚠️ 無法取得資料：{e}"
         messaging_api.reply_message(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[TextMessage(text=msg)],
-            )
+            ReplyMessageRequest(reply_token=event.reply_token, messages=[TextMessage(text=msg)])
         )
 
 
@@ -87,6 +128,7 @@ def check_for_updates():
     try:
         new_data = fetch_all_data()
         save_cache({"fingerprint": new_fp, "data": new_data})
+        maybe_rotate_weekly(new_data.get("cv", {}))
         print(f"[Monitor] 快取已更新（{new_fp[:12]}...）", file=sys.stderr)
     except Exception as e:
         print(f"[Monitor] 快取更新失敗：{e}", file=sys.stderr)
@@ -100,7 +142,6 @@ def start_scheduler():
     print(f"[Monitor] 排程器啟動，每 {Config.MONITOR_INTERVAL_SECONDS} 秒檢查一次", file=sys.stderr)
 
 
-# 啟動排程器（gunicorn 匯入時一併啟動）
 start_scheduler()
 
 if __name__ == "__main__":
