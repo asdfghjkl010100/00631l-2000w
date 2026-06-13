@@ -7,7 +7,10 @@ import csv
 import io
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+# 台灣時區
+TZ = timezone(timedelta(hours=8))
 from .config import Config
 
 
@@ -173,6 +176,6 @@ def build_update_message(old: dict, new: dict) -> str | None:
     if not parts:
         return None
 
-    now_str = datetime.now().strftime('%Y/%m/%d %H:%M')
+    now_str = datetime.now(TZ).strftime('%Y/%m/%d %H:%M')
     header = f'📢 *台股國運基金 更新通知*\n🕐 {now_str}'
     return header + '\n' + '\n'.join(parts)

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合資定期定額 · 台股國運基金</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;min-height:100vh}
+.navbar{background:#fff;border-bottom:1px solid #e8ecf1;padding:0 24px;position:sticky;top:0;z-index:100}
+.nav-inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-weight:700;font-size:1.15rem;color:#1a56db}
+.nav-links{display:flex;gap:12px;align-items:center}
+.nav-links a{color:#5a6a7e;text-decoration:none;font-size:0.9rem;font-weight:500;padding:8px 16px;border-radius:6px;transition:0.2s}
+.nav-links a:hover{background:#f0f4ff;color:#1a56db}
+.nav-links select{color:#5a6a7e;font-size:0.9rem;font-weight:500;background:#fff;border:1px solid #d0d7e2;padding:8px 16px;border-radius:6px;cursor:pointer;outline:none}
+.backend-badge{display:inline-block;font-size:0.75rem;background:#eef2f7;color:#7a8aa0;padding:4px 10px;border-radius:999px;margin-left:8px}
+.container{max-width:1300px;margin:0 auto;padding:20px}
+.fund-header{background:#fff;border:1px solid #e8ecf1;border-radius:12px;padding:22px 28px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.fund-header-left{flex:1;min-width:200px}
+.fund-code{font-size:1.6rem;font-weight:800;color:#1a56db}
+.fund-code small{font-size:0.55em;font-weight:400;color:#8a9bb5;margin-left:6px}
+.fund-name{font-size:1rem;color:#2c3e50;margin-top:4px}
+.fund-header-right{text-align:right}
+.fund-badge{display:inline-block;background:#eaf4ff;color:#1a56db;font-size:0.82rem;font-weight:600;padding:6px 14px;border-radius:999px}
+.fund-update{font-size:0.8rem;color:#8a9bb5;margin-top:6px}
+.tabs{display:flex;margin-bottom:20px;background:#fff;border:1px solid #e8ecf1;border-radius:10px;overflow:hidden}
+.tab-btn{flex:1;padding:14px 20px;text-align:center;font-size:0.95rem;font-weight:600;color:#5a6a7e;cursor:pointer;transition:0.25s;border:none;background:#fff;border-bottom:3px solid transparent}
+.tab-btn:hover{background:#f8faff;color:#1a56db}
+.tab-btn.active{color:#1a56db;border-bottom-color:#1a56db;background:#f8faff}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:20px}
+.info-card{background:#fff;border:1px solid #e8ecf1;border-radius:10px;padding:18px 20px}
+.info-card .ic-label{font-size:0.78rem;color:#8a9bb5;margin-bottom:6px}
+.info-card .ic-value{font-size:1.2rem;font-weight:700;color:#2c3e50}
+.info-card .ic-sub{font-size:0.85rem;color:#7a8aa0;margin-top:4px}
+.snapshot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.snap-card{background:#fff;border:1px solid #e8ecf1;border-radius:10px;padding:16px}
+.snap-card .sc-label{font-size:0.78rem;color:#8a9bb5;margin-bottom:6px}
+.snap-card .sc-value{font-size:1.4rem;font-weight:800;color:#2c3e50}
+.snap-card .sc-delta{font-size:0.82rem;color:#7a8aa0;margin-top:6px}
+.snap-card.up .sc-value{color:#27ae60}
+.snap-card.down .sc-value{color:#e74c3c}
+.snap-card.gold .sc-value{color:#c8963e}
+.cmp-bar{position:relative;height:14px;background:#eef1f5;border-radius:999px;overflow:hidden;margin-bottom:6px}
+.cmp-bar .bar{position:absolute;top:0;bottom:0;border-radius:999px}
+.cmp-bar .bar-inv{left:0;background:linear-gradient(90deg,#4a90d9,#6db1ff)}
+.cmp-bar .bar-cur{left:0;background:linear-gradient(90deg,#c8963e,#e7c05f);opacity:0.85}
+.cmp-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:0.78rem;color:#5a6a7e}
+.cmp-legend span{display:flex;align-items:center;gap:4px}
+.legend-swatch{width:10px;height:10px;border-radius:2px;display:inline-block}
+.info-table-wrap{background:#fff;border:1px solid #e8ecf1;border-radius:10px;overflow:hidden}
+.info-table{width:100%;border-collapse:collapse}
+.info-table th,.info-table td{padding:12px 18px;text-align:left;font-size:0.9rem;border-bottom:1px solid #f0f2f5}
+.info-table th{background:#f8faff;color:#5a6a7e;font-weight:600;width:160px}
+.info-table tr:last-child td,.info-table tr:last-child th{border-bottom:none}
+.chart-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:20px}
+.chart-box{background:#fff;border:1px solid #e8ecf1;border-radius:10px;padding:18px;min-height:320px}
+.chart-box .chart-title{font-size:0.95rem;font-weight:600;color:#2c3e50;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #f0f2f5}
+.chart-box canvas{max-height:300px}
+.table-wrap{background:#fff;border:1px solid #e8ecf1;border-radius:10px;overflow-x:auto}
+.table-wrap table{width:100%;border-collapse:collapse;font-size:0.88rem}
+.table-wrap th,.table-wrap td{padding:10px 14px;text-align:left;white-space:nowrap;border-bottom:1px solid #f0f2f5}
+.table-wrap th{background:#f8faff;color:#5a6a7e;font-weight:600;position:sticky;top:0}
+.table-wrap tr:last-child td{border-bottom:none}
+.clickable-row{cursor:pointer}
+.clickable-row:hover td{background:#f0f4ff}
+.section-title{font-size:1.2rem;font-weight:700;color:#2c3e50;margin-bottom:16px;padding-left:14px;border-left:4px solid #1a56db}
+.loading{text-align:center;padding:60px 20px;color:#8a9bb5;font-size:0.95rem}
+.loading .spinner{display:inline-block;width:36px;height:36px;border:3px solid #e8ecf1;border-top-color:#1a56db;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{color:#e74c3c;padding:20px;text-align:center}
+.nav-table-wrap{background:#fff;border:1px solid #e8ecf1;border-radius:10px;overflow-x:auto;max-height:480px;overflow-y:auto}
+.nav-table-wrap table{width:100%;border-collapse:collapse;font-size:0.88rem}
+.nav-table-wrap th,.nav-table-wrap td{padding:10px 14px;text-align:center;white-space:nowrap;border-bottom:1px solid #f0f2f5}
+.nav-table-wrap th{background:#f8faff;color:#5a6a7e;font-weight:600;position:sticky;top:0;z-index:1}
+.nav-table-wrap tr:last-child td{border-bottom:none}
+.nav-table-wrap tr:hover td{background:#f8faff}
+.back-btn{background:#fff;border:1px solid #d0d7e2;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.9rem;color:#5a6a7e;margin-bottom:16px;transition:0.2s}
+.back-btn:hover{border-color:#1a56db;color:#1a56db}
+@media(max-width:768px){.snapshot-grid{grid-template-columns:repeat(2,1fr)}.tab-btn{font-size:0.82rem;padding:12px 10px}.fund-header{flex-direction:column}.fund-header-right{text-align:left}.info-table th{width:100px;font-size:0.8rem}}
+</style>
+</head>
+<body>
+<nav class="navbar"><div class="nav-inner">
+<div class="logo">合資定期定額 · 台股國運基金 <span id="backendBadge" class="backend-badge">直連 Sheets</span></div>
+<div class="nav-links">
+<a href="#" id="navOverview">總覽</a>
+<select id="memberSelect"><option value="">團員明細</option></select>
+</div></div></nav>
+<div class="container" id="app">
+<div id="loadingMsg" class="loading"><div class="spinner"></div><div>正在從 <span id="dataSource">Google Sheets</span> 讀取最新資料...</div></div>
+<div id="overviewSection">
+<div class="fund-header">
+<div class="fund-header-left"><div class="fund-code">合資定期定額基金 <small>00631L</small></div><div class="fund-name">合資定期定額 · 台股國運基金</div></div>
+<div class="fund-header-right"><div class="fund-badge" id="overviewFreshness">資料更新中</div><div class="fund-update" id="overviewHeroSubtitle">即時彙整 Google Sheets 資料</div></div>
+</div>
+<div class="tabs">
+<button class="tab-btn active" data-tab="tabInfo">基本資訊</button>
+<button class="tab-btn" data-tab="tabRatio">持股比重</button>
+<button class="tab-btn" data-tab="tabCompare">指數比較</button>
+<button class="tab-btn" data-tab="tabNAV">歷史淨值</button>
+</div>
+<div class="tab-content active" id="tabInfo">
+<div class="snapshot-grid" id="heroStats">
+<div class="snap-card"><div class="sc-label">累計申購金額</div><div class="sc-value" id="heroInvested">--</div><div class="sc-delta">來自 Google Sheets</div></div>
+<div class="snap-card gold"><div class="sc-label">目前資產價值</div><div class="sc-value" id="heroCurrent">--</div><div class="sc-delta">當前市值 / 淨值換算</div></div>
+<div class="snap-card" id="heroProfitCard"><div class="sc-label">未實現損益</div><div class="sc-value" id="heroProfit">--</div><div class="sc-delta">資產價值 - 累計申購</div></div>
+<div class="snap-card gold"><div class="sc-label">整體報酬率</div><div class="sc-value" id="heroROI">--</div><div class="sc-delta">整體報酬表現</div></div>
+</div>
+<div class="info-card" style="margin-bottom:20px"><div style="margin-bottom:8px;font-size:0.82rem;color:#8a9bb5">投入 vs 目前資產比較</div>
+<div class="cmp-bar"><div class="bar bar-inv" id="comparisonInvestedBar"></div><div class="bar bar-cur" id="comparisonCurrentBar"></div></div>
+<div class="cmp-legend"><span><span class="legend-swatch" style="background:#4a90d9"></span>累計申購</span><span><span class="legend-swatch" style="background:#c8963e"></span>目前資產</span></div>
+</div>
+<div class="section-title">基金檔案</div>
+<div class="info-table-wrap"><table class="info-table">
+<tr><th>基金名稱</th><td>合資定期定額 · 台股國運基金</td><th>基金類型</th><td>合資投資組合</td></tr>
+<tr><th>標的指數</th><td>00631L 元大台灣50正2</td><th>成立日期</th><td id="infoStartDate">--</td></tr>
+<tr><th>累計申購金額</th><td id="infoInvested">--</td><th>目前資產價值</th><td id="infoCurrent">--</td></tr>
+<tr><th>團員人數</th><td id="infoMemberCount">--</td><th>最新更新</th><td id="infoUpdateDate">--</td></tr>
+</table></div>
+<div style="margin-top:20px"><div class="section-title">團員績效摘要</div>
+<div class="table-wrap"><table id="memberSummaryTable"><thead><tr><th>成員</th><th>累計申購金額</th><th>持有單位數</th><th>目前資產價值</th><th>報酬率</th><th>每月建議申購</th></tr></thead>
+<tbody id="memberSummaryBody"></tbody></table></div></div></div>
+<div class="tab-content" id="tabRatio">
+<div class="section-title">資產分布</div>
+<div class="info-grid">
+<div class="info-card"><div class="ic-label">現金占比</div><div class="ic-value" id="ratioCash">--</div><div class="ic-sub">可動用資金</div></div>
+<div class="info-card"><div class="ic-label">股票曝險</div><div class="ic-value" id="ratioStock">--</div><div class="ic-sub">透過 00631L 持有</div></div>
+<div class="info-card"><div class="ic-label">總資產</div><div class="ic-value" id="ratioTotal">--</div><div class="ic-sub">合資總市值</div></div>
+<div class="info-card"><div class="ic-label">曝險比例</div><div class="ic-value" id="ratioExposure">--</div><div class="ic-sub">股票曝險 / 總資產</div></div>
+</div>
+<div class="chart-row"><div class="chart-box"><div class="chart-title">資產配置</div><canvas id="pieChart"></canvas></div><div class="chart-box"><div class="chart-title">投入 vs 目前資產</div><canvas id="comparisonChart"></canvas></div></div>
+<div class="section-title">成員資產占比</div>
+<div class="table-wrap"><table id="ratioMemberTable"><thead><tr><th>成員</th><th>累計申購</th><th>占比</th><th>目前資產價值</th><th>占比</th><th>損益</th></tr></thead><tbody id="ratioMemberBody"></tbody></table></div></div>
+<div class="tab-content" id="tabCompare">
+<div class="section-title">淨值、資產、指數比較</div>
+<div class="chart-row"><div class="chart-box"><div class="chart-title">總資產 vs 累計申購走勢</div><canvas id="overviewChart"></canvas></div><div class="chart-box"><div class="chart-title">每週資產變化</div><canvas id="indexCompareChart"></canvas></div></div>
+<div class="info-card"><div class="ic-label">備註</div><div class="ic-sub" style="margin-top:4px;line-height:1.7">圖一：總資產價值與累計申購金額比較圖<br>圖二：每週資產變化趨勢<br>資料來源：Google Sheets，資料僅供參考。</div></div></div>
+<div class="tab-content" id="tabNAV">
+<div class="section-title">歷史淨值</div>
+<div class="info-grid">
+<div class="info-card"><div class="ic-label">最新資產價值</div><div class="ic-value" id="navLatestValue">--</div><div class="ic-sub">最新一期</div></div>
+<div class="info-card"><div class="ic-label">累計申購金額</div><div class="ic-value" id="navTotalInvested">--</div><div class="ic-sub">總投入成本</div></div>
+<div class="info-card"><div class="ic-label">資料筆數</div><div class="ic-value" id="navDataCount">--</div><div class="ic-sub">週資料</div></div>
+<div class="info-card"><div class="ic-label">最新日期</div><div class="ic-value" id="navLatestDate">--</div><div class="ic-sub">最近更新</div></div>
+</div>
+<div class="chart-box" style="margin-bottom:20px"><div class="chart-title">每週淨值走勢</div><canvas id="navChart"></canvas></div>
+<div class="section-title">歷史明細</div>
+<div class="nav-table-wrap"><table id="navDetailTable"><thead><tr><th>日期</th><th>資產價值</th><th>累計申購</th><th>淨值 (每單位)</th><th>單位數</th></tr></thead><tbody id="navDetailBody"></tbody></table></div></div>
+<div id="overviewCards" style="display:none"></div></div>
+<div id="memberSection" style="display:none">
+<button class="back-btn" id="backToOverview">← 返回總覽</button>
+<div class="section-title" id="memberTitle"></div>
+<div class="info-grid" id="memberCards"></div>
+<div class="chart-row"><div class="chart-box"><div class="chart-title">個人資產價值走勢</div><canvas id="memberNavChart"></canvas></div><div class="chart-box"><div class="chart-title">每月申購金額</div><canvas id="memberInvestmentChart"></canvas></div></div>
+<div class="section-title">歷史交易明細</div>
+<div class="table-wrap"><table id="memberDetailTable"><thead><tr><th>日期</th><th>申購金額</th><th>成交淨值</th><th>購得單位數</th><th>累積單位</th></tr></thead><tbody id="memberDetailBody"></tbody></table></div></div></div>
+<script>
+// ========================
+//  🔧 後端方案切換設定
+// ========================
+// 三種模式：
+//   'direct'      — 前端直接 fetch Google Sheets CSV（原始模式）
+//   'node'        — 透過 Node.js 後端代理 (http://localhost:3000)
+//   'appsscript'  — 透過 Google Apps Script API
+const BACKEND_MODE = 'direct'; // ← 改這裡切換後端
+
+// 若使用 Apps Script，填寫部署後的網址
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/你的APP_SCRIPT_ID/exec';
+
+// Node.js 伺服器網址
+const NODE_SERVER = 'http://localhost:3000';
+
+// ========================
+//  Google Sheets CSV 網址（直連模式用）
+// ========================
+const CSV = {
+  core: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=1130608596&single=true&output=csv',
+  ms: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=284048808&single=true&output=csv',
+  wn: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=1167489800&single=true&output=csv',
+  mb: [
+    {n:'淡定ㄉ圍觀',u:'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=1138157330&single=true&output=csv'},
+    {n:'隔壁ㄉ老王',u:'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=1862214689&single=true&output=csv'},
+    {n:'真的很敷衍',u:'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=22779118&single=true&output=csv'},
+    {n:'樂天小腳腳',u:'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=2107206751&single=true&output=csv'},
+    {n:'太空軍校生',u:'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=1339484185&single=true&output=csv'},
+    {n:'育仔',u:'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=330914372&single=true&output=csv'}
+  ]
+};
+
+// ========================
+//  工具函式
+// ========================
+function PC(t){return t.trim().split('\n').map(r=>{let c=[],s='',q=!1;for(let ch of r){if(ch=='"'){q=!q;continue}if(ch==','&&!q){c.push(s.trim());s='';continue}s+=ch}c.push(s.trim());return c})}
+function EH(s){let d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function PD(s){if(!s)return 0;let p=String(s).trim().split('/').map(Number);return p[0]*10000+p[1]*100+p[2]}
+function SF(v){let n=parseFloat(String(v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
+function FN(n,d){if(n==null||isNaN(n))return'--';if(Math.abs(n)>=1e8)return(n/1e8).toFixed(d)+'億';if(Math.abs(n)>=1e4)return(n/1e4).toFixed(d)+'萬';return n.toFixed(d)}
+function FR(n){if(n==null||isNaN(n))return'--';return(n>=0?'+':'')+n.toFixed(2)+'%'}
+
+// ========================
+//  資料擷取（依模式切換）
+// ========================
+async function FC(u){
+  if(BACKEND_MODE==='direct') return await(await fetch(u,{cache:'no-store'})).text();
+  // node 與 appsscript 模式不使用直接 CSV fetch
+  throw new Error('Direct fetch not used in this mode');
+}
+
+async function fetchJSON(url){
+  const r=await fetch(url);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+
+async function loadAllData(){
+  const src=document.getElementById('dataSource');
+  const badge=document.getElementById('backendBadge');
+  
+  if(BACKEND_MODE==='direct'){
+    badge.textContent='直連 Sheets';
+    const t1=await FC(CSV.core),r1=PC(t1);
+    const cvMap={};r1.forEach(r=>{if(r[0])cvMap[String(r[0]).trim()]=SF(r[1])});
+    const cv={ta:cvMap['合資總資產']||0,ca:cvMap['帳上現金']||0,sv:0,sd:'2025/12/21',ti:cvMap['帳上現金']||0};
+    
+    const t2=await FC(CSV.ms),r2=PC(t2),msd=[];
+    for(let i=1;i<r2.length;i++){let c=r2[i];if(c.length<6)continue;msd.push({n:c[0],i:SF(c[1]),u:SF(c[2]),v:SF(c[3]),r:SF(c[4]),m:SF(c[5])})}
+    
+    const t3=await FC(CSV.wn),r3=PC(t3),wn=[];
+    for(let i=1;i<r3.length;i++){let c=r3[i],ds=c[0].trim();if(!/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds))continue;wn.push({d:ds,dk:PD(ds),a:SF(c[1]),i:SF(c[2]),n:SF(c[3])})}
+    
+    const md=[];for(const m of CSV.mb){const t=await FC(m.u),r=PC(t),iv=[];let cum=0;for(let i=1;i<r.length;i++){let c=r[i],ds=c[0].trim();if(/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds)&&SF(c[1])>0){cum+=SF(c[3]);iv.push({d:ds,dk:PD(ds),a:SF(c[1]),n:SF(c[2]),u:SF(c[3]),cu:cum})}}md.push(iv)}
+    return {cv,msd,wn,md};
+    
+  }else if(BACKEND_MODE==='node'){
+    badge.textContent='Node.js 後端';
+    src.textContent='Node.js 伺服器';
+    const [cv,msd,wn,m1,m2]=await Promise.all([
+      fetchJSON(NODE_SERVER+'/api/core'),
+      fetchJSON(NODE_SERVER+'/api/members'),
+      fetchJSON(NODE_SERVER+'/api/weekly'),
+      fetchJSON(NODE_SERVER+'/api/member/1'),
+      fetchJSON(NODE_SERVER+'/api/member/2')
+    ]);
+    return {cv,msd,wn,md:[m1,m2]};
+    
+  }else if(BACKEND_MODE==='appsscript'){
+    badge.textContent='Apps Script API';
+    src.textContent='Google Apps Script';
+    const data=await fetchJSON(APPS_SCRIPT_URL+'?path=all');
+    function parseRows(rows){return rows.slice(1).filter(r=>r[0]&&r[0]!=='').map(r=>r.map(c=>isNaN(c)?c:SF(c)))}
+    
+    const r1=data.core[1]||data.core[0]||[];
+    const cv={ta:SF(r1[0]),ca:SF(r1[1]),sv:SF(r1[2]),sd:String(r1[3]||''),ti:SF(r1[4])};
+    
+    const msd=parseRows(data.members).map(r=>({n:String(r[0]),i:r[1],u:r[2],v:r[3],r:r[4],m:r[5]}));
+    const wn=parseRows(data.weekly).map(r=>{const ds=String(r[0]);return{d:ds,dk:PD(ds),a:r[1],i:r[2],n:r[3]}}).filter(x=>x.dk>0);
+    
+    const md=[data.member1,data.member2].map(rows=>parseRows(rows).map(r=>{const ds=String(r[0]);return{d:ds,dk:PD(ds),a:r[1],n:r[2],u:r[3],cu:r[4]}}).filter(x=>x.dk>0));
+    return {cv,msd,wn,md};
+  }
+}
+
+// ========================
+//  圖表與渲染（同前）
+// ========================
+let pci,cci,oci,icci,nci,mnci,mpci;
+const LM=document.getElementById('loadingMsg'),OS=document.getElementById('overviewSection'),MS=document.getElementById('memberSection');
+const SEL=document.getElementById('memberSelect'),BK=document.getElementById('backToOverview');
+
+function CN(iv){let s=[],cu=0;for(let v of iv){cu+=v.u;s.push({d:v.d,dk:v.dk,v:cu*v.n,cu:cu})}return s}
+
+function RO(cv,msd,wn){
+  let l=wn?.length?wn[wn.length-1]:null,it=l?l.i:cv.ta,ct=l?l.a:cv.ta,pt=ct-it,rt=it>0?(pt/it)*100:0;
+  document.getElementById('heroInvested').textContent='NT$ '+FN(it,0);
+  document.getElementById('heroCurrent').textContent='NT$ '+FN(ct,0);
+  document.getElementById('heroProfit').textContent='NT$ '+FN(pt,0);
+  document.getElementById('heroROI').textContent=FR(rt);
+  let pc=document.getElementById('heroProfitCard');pc.className='snap-card'+(pt>=0?' up':' down');
+  let mv=Math.max(it,ct)||1;document.getElementById('comparisonInvestedBar').style.width=(it/mv)*100+'%';
+  document.getElementById('comparisonCurrentBar').style.width=(ct/mv)*100+'%';
+  document.getElementById('overviewFreshness').textContent=l?'最新更新 '+l.d:'資料更新中';
+  document.getElementById('overviewHeroSubtitle').textContent=l?'累計申購 NT$ '+FN(it,0)+'，目前資產價值 NT$ '+FN(ct,0):'即時彙整 Google Sheets 資料';
+  document.getElementById('infoInvested').textContent='NT$ '+FN(it,0);
+  document.getElementById('infoCurrent').textContent='NT$ '+FN(ct,0);
+  document.getElementById('infoStartDate').textContent=cv.sd||'--';
+  document.getElementById('infoMemberCount').textContent=msd.length+' 人';
+  document.getElementById('infoUpdateDate').textContent=l?l.d:'--';
+  document.getElementById('memberSummaryBody').innerHTML=msd.map((m,i)=>'<tr class="clickable-row" data-idx="'+i+'"><td>'+EH(m.n)+'</td><td>NT$ '+FN(m.i,0)+'</td><td>'+FN(m.u,5)+'</td><td>NT$ '+FN(m.v,0)+'</td><td>'+FR(m.r)+'</td><td>'+(m.m?'NT$ '+FN(m.m,0):'--')+'</td></tr>').join('');
+  let sc=cv.ca||0,sa=cv.ta||1,se=cv.sv||0;
+  document.getElementById('ratioCash').textContent='NT$ '+FN(sc,0);
+  document.getElementById('ratioStock').textContent='NT$ '+FN(se,0);
+  document.getElementById('ratioTotal').textContent='NT$ '+FN(sa,0);
+  document.getElementById('ratioExposure').textContent=(se/sa*100).toFixed(1)+'%';
+  let ts=msd.reduce((s,m)=>s+m.i,0),tv=msd.reduce((s,m)=>s+m.v,0);
+  document.getElementById('ratioMemberBody').innerHTML=msd.map(m=>{let p=m.v-m.i;return'<tr><td>'+EH(m.n)+'</td><td>NT$ '+FN(m.i,0)+'</td><td>'+(ts>0?(m.i/ts*100).toFixed(1):'0')+'%</td><td>NT$ '+FN(m.v,0)+'</td><td>'+(tv>0?(m.v/tv*100).toFixed(1):'0')+'%</td><td style="color:'+(p>=0?'#27ae60':'#e74c3c')+'">'+FR(p/m.i*100)+'</td></tr>'}).join('');
+  document.getElementById('navLatestValue').textContent=ct>0?'NT$ '+FN(ct,0):'--';
+  document.getElementById('navTotalInvested').textContent=it>0?'NT$ '+FN(it,0):'--';
+  document.getElementById('navDataCount').textContent=wn.length+' 筆';
+  document.getElementById('navLatestDate').textContent=l?l.d:'--';
+  if(wn.length){let sd=[...wn].sort((a,b)=>b.dk-a.dk);
+    document.getElementById('navDetailBody').innerHTML=sd.map(w=>{let uc=w.n>0?(w.a/w.n).toFixed(2):'--';return'<tr><td>'+w.d+'</td><td>NT$ '+FN(w.a,0)+'</td><td>NT$ '+FN(w.i,0)+'</td><td>'+(w.n?'NT$ '+FN(w.n,2):'--')+'</td><td>'+uc+'</td></tr>'}).join('')}
+  else document.getElementById('navDetailBody').innerHTML='<tr><td colspan="5" style="text-align:center;color:#8a9bb5;padding:30px">尚無歷史資料</td></tr>';
+  DP(sc,se);DC(it,ct);DO(wn);DI(wn);DN(wn);
+}
+
+function DP(ca,st){let ctx=document.getElementById('pieChart').getContext('2d');if(pci)pci.destroy();pci=new Chart(ctx,{type:'doughnut',data:{labels:['現金','股票曝險 (00631L)'],datasets:[{data:[ca,st],backgroundColor:['#4a90d9','#c8963e'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#5a6a7e',font:{size:12}}}}}})}
+function DC(i,c){let ctx=document.getElementById('comparisonChart').getContext('2d');if(cci)cci.destroy();cci=new Chart(ctx,{type:'bar',data:{labels:['累計申購','目前資產'],datasets:[{data:[i,c],backgroundColor:['#4a90d9','#c8963e'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:'#8a9bb5',callback:v=>FN(v,0)},grid:{color:'#f0f2f5'}},x:{ticks:{color:'#5a6a7e'}}}}})}
+function DO(w){let ctx=document.getElementById('overviewChart').getContext('2d');if(oci)oci.destroy();if(!w||!w.length)return;oci=new Chart(ctx,{type:'line',data:{labels:w.map(s=>s.d),datasets:[{label:'總資產價值',data:w.map(s=>s.a),borderColor:'#c8963e',backgroundColor:'rgba(200,150,62,0.1)',fill:true,tension:0.2,pointRadius:2},{label:'累計申購金額',data:w.map(s=>s.i),borderColor:'#4a90d9',borderDash:[5,4],fill:false,tension:0.2,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5',font:{size:10}},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>FN(v,0)},grid:{color:'#f0f2f5'}}}}})}
+function DI(w){let ctx=document.getElementById('indexCompareChart').getContext('2d');if(icci)icci.destroy();if(!w||!w.length)return;let ch=w.map((s,i)=>{if(i===0)return 0;let p=w[i-1].a;return p>0?((s.a-p)/p)*100:0});icci=new Chart(ctx,{type:'bar',data:{labels:w.map(s=>s.d),datasets:[{label:'週變化率 (%)',data:ch,backgroundColor:ch.map(v=>v>=0?'rgba(39,174,96,0.7)':'rgba(231,76,60,0.7)'),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5',font:{size:10}},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>v+'%'},grid:{color:'#f0f2f5'}}}}})}
+function DN(w){let ctx=document.getElementById('navChart').getContext('2d');if(nci)nci.destroy();if(!w||!w.length)return;nci=new Chart(ctx,{type:'line',data:{labels:w.map(s=>s.d),datasets:[{label:'每單位淨值 (NT$)',data:w.map(s=>s.n||0),borderColor:'#1a56db',backgroundColor:'rgba(26,86,219,0.08)',fill:true,tension:0.2,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5',font:{size:10}},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>'NT$ '+v.toFixed(2)},grid:{color:'#f0f2f5'}}}}})}
+
+function SM(i,md,msd){
+  cmi=i;OS.style.display='none';MS.style.display='block';
+  let mi=CSV.mb[i],iv=md[i]||[],s=CN(iv),l=s.length?s[s.length-1]:null,cv=l?l.v:0,ti=iv.reduce((s,v)=>s+v.a,0),tu=l?l.cu:0,ro=ti>0?((cv-ti)/ti)*100:0;
+  document.getElementById('memberTitle').textContent=mi.n+' 投資明細';
+  document.getElementById('memberCards').innerHTML=[
+    {l:'累計申購金額',v:'NT$ '+FN(ti,0)},{l:'目前資產價值',v:'NT$ '+FN(cv,0),g:1},{l:'個人報酬率',v:FR(ro)},{l:'持有單位數',v:FN(tu,5)}
+  ].map(c=>'<div class="info-card"><div class="ic-label">'+c.l+'</div><div class="ic-value" style="color:'+(c.g?'#c8963e':'#2c3e50')+'">'+c.v+'</div></div>').join('');
+  let cu=0;
+  document.getElementById('memberDetailBody').innerHTML=iv.map(v=>{cu+=v.u;return'<tr><td>'+v.d+'</td><td>NT$ '+FN(v.a,0)+'</td><td>'+FN(v.n,4)+'</td><td>'+FN(v.u,5)+'</td><td>'+FN(cu,5)+'</td></tr>'}).join('')||'<tr><td colspan="5" style="text-align:center;color:#8a9bb5;padding:30px">尚無交易記錄</td></tr>';
+  DM(s,iv);
+}
+function DM(s,iv){
+  if(!s.length)return;
+  let c1=document.getElementById('memberNavChart').getContext('2d');if(mnci)mnci.destroy();
+  let ds=s.map(x=>x.d),vs=s.map(x=>x.v),ci=[],ti=0,ii=0;
+  for(let x of s){while(ii<iv.length&&iv[ii].dk<=x.dk){ti+=iv[ii].a;ii++}ci.push(ti)}
+  mnci=new Chart(c1,{type:'line',data:{labels:ds,datasets:[{label:'個人資產價值 (NT$)',data:vs,borderColor:'#c8963e',backgroundColor:'rgba(200,150,62,0.1)',fill:true,tension:0.2,pointRadius:1},{label:'累計申購金額',data:ci,borderColor:'#4a90d9',borderDash:[6,4],fill:false,tension:0.2,pointRadius:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5'},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>FN(v,0)},grid:{color:'#f0f2f5'}}}}});
+  let c2=document.getElementById('memberInvestmentChart').getContext('2d');if(mpci)mpci.destroy();
+  let ml=iv.map(v=>v.d.substring(0,7)),am=iv.map(v=>v.a);
+  mpci=new Chart(c2,{type:'bar',data:{labels:ml,datasets:[{label:'每月申購金額 (NT$)',data:am,backgroundColor:'#c8963e',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5'},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>'NT$ '+FN(v,0)},grid:{color:'#f0f2f5'}}}}});
+}
+function BKFn(){OS.style.display='block';MS.style.display='none';cmi=-1;SEL.value=''}
+
+document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',function(){document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));this.classList.add('active');document.getElementById(this.dataset.tab).classList.add('active')})});
+
+async function init(){
+  try{
+    LM.style.display='block';OS.style.display='block';
+    const data=await loadAllData();
+    const cv=data.cv,msd=data.msd,wn=data.wn,md=data.md;
+    
+    SEL.innerHTML='<option value="">團員明細</option>';
+    CSV.mb.forEach((m,i)=>{let o=document.createElement('option');o.value=i;o.textContent=m.n;SEL.appendChild(o)});
+    SEL.addEventListener('change',function(e){let i=parseInt(e.target.value);if(!isNaN(i))SM(i,md,msd);else BKFn()});
+    document.addEventListener('click',function(e){let r=e.target.closest('.clickable-row');if(r){let i=parseInt(r.dataset.idx);if(!isNaN(i)){SEL.value=i;SM(i,md,msd)}}});
+    
+    RO(cv,msd,wn);
+    LM.style.display='none';
+  }catch(e){LM.innerHTML='<div class="error">⚠️ 資料讀取失敗：'+EH(e.message)+'。請確認後端已啟動或網路正常。</div>';console.error(e)}
+}
+init();
+</script>
+</body>
+</html>
+
+

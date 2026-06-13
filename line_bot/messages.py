@@ -1,5 +1,5 @@
 """LINE Bot ????"""
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 def format_number(n):
     if n is None: return "--"
@@ -13,7 +13,7 @@ def format_pct(n):
     return f"{s}{n:.2f}%"
 
 def build_status_message(cv, msd, update_time=None, weekly=None):
-    ts = update_time or datetime.now().strftime("%Y/%m/%d %H:%M")
+    ts = update_time or datetime.now(timezone(timedelta(hours=8))).strftime("%Y/%m/%d %H:%M")
     lines = [
         "?? *?????? ? ????*",
         f"?? {ts}", "",

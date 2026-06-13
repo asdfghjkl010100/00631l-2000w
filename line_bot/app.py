@@ -2,7 +2,7 @@
 import sys
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import Flask, request, abort
 from linebot.v3 import WebhookHandler
 from linebot.v3.messaging import ApiClient, Configuration, MessagingApi, ReplyMessageRequest, PushMessageRequest, TextMessage
@@ -44,7 +44,7 @@ def load_weekly_snapshot() -> dict | None:
 
 
 def save_weekly_snapshot(cv: dict):
-    data = {"timestamp": datetime.now().isoformat(), "cv": cv}
+    data = {"timestamp": datetime.now(timezone(timedelta(hours=8))).isoformat(), "cv": cv}
     with open(WEEKLY_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
     print("[Weekly] 已儲存本周快照", file=sys.stderr)
@@ -58,7 +58,7 @@ def maybe_rotate_weekly(cv: dict):
         return
     saved = datetime.fromisoformat(snap["timestamp"])
     # 如果距離上次儲存超過 6 天，更新快照
-    if datetime.now() - saved > timedelta(days=6):
+    if datetime.now(timezone(timedelta(hours=8))) - saved > timedelta(days=6):
         save_weekly_snapshot(cv)
 
 
