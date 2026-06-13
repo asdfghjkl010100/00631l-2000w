@@ -138,12 +138,20 @@ def check_for_updates():
         print(f"[Monitor] 快取更新失敗：{e}", file=sys.stderr)
 
 
-def start_scheduler():
-    from apscheduler.schedulers.background import BackgroundScheduler
-    sched = BackgroundScheduler()
-    sched.add_job(check_for_updates, "interval", seconds=Config.MONITOR_INTERVAL_SECONDS, id="sheets_monitor")
-    sched.start()
+def _run_loop():
+    import time
     print(f"[Monitor] 排程器啟動，每 {Config.MONITOR_INTERVAL_SECONDS} 秒檢查一次", file=sys.stderr)
+    while True:
+        try:
+            check_for_updates()
+        except:
+            pass
+        time.sleep(Config.MONITOR_INTERVAL_SECONDS)
+
+def start_scheduler():
+    import threading
+    t = threading.Thread(target=_run_loop, daemon=True)
+    t.start()
 
 
 start_scheduler()
