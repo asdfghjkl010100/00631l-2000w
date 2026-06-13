@@ -100,7 +100,9 @@ def start_scheduler():
     print(f"[Monitor] 排程器啟動，每 {Config.MONITOR_INTERVAL_SECONDS} 秒檢查一次", file=sys.stderr)
 
 
+# 啟動排程器（gunicorn 匯入時一併啟動）
+start_scheduler()
+
 if __name__ == "__main__":
-    start_scheduler()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
