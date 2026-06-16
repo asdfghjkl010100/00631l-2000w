@@ -224,7 +224,7 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
 
   <!-- 0050 定期定額比較 -->
   <div class="section-title">0050 定期定額比較</div>
-  <div class="section-sub">相同投入金額與日期，模擬買入 0050</div>
+  <div class="section-sub">相同投入金額與日期，每月1號以收盤價買入 0050（實際為每月2/12/22號扣款，長期視為同一天）</div>
   <div id="dcaStatus"></div>
   <div class="cmp-summary" id="dcaSummary">
     <div class="cmp-card"><div class="cc-label">基金目前資產</div><div class="cc-value" id="dcaFundValue">--</div><div class="cc-sub">00631L 合資</div></div>
@@ -598,9 +598,6 @@ async function renderDCAComparison(wn){
 
   statusEl.innerHTML = '';
 
-  // 從 wn 算出各期投入金額，分配到每月 2/12/22 號各 1/3
-  const INVEST_DAYS = [2, 12, 22];
-
   // 找最接近的 0050 價格
   function findClosestPrice(dateStr, priceMap){
     if(priceMap[dateStr]) return priceMap[dateStr];
@@ -619,7 +616,7 @@ async function renderDCAComparison(wn){
   const all0050Dates = Object.keys(prices0050).sort();
   const current0050Price = all0050Dates.length > 0 ? prices0050[all0050Dates[all0050Dates.length - 1]] : null;
 
-  // 照實際每期投入金額分配到 2/12/22
+  // 每期投入金額對應到該月1號一次買入 0050
   let cumShares = 0;
   const investRecords = [];
   let totalInvested0050 = 0;
@@ -628,26 +625,13 @@ async function renderDCAComparison(wn){
     const periodInvest = i === 0 ? wn[i].i : wn[i].i - wn[i-1].i;
     if(periodInvest <= 0) continue;
 
-    const eachInvest = Math.floor(periodInvest / 3);
-    const remainder = periodInvest - eachInvest * 3;
-
     const baseDate = new Date(wn[i].d.replace(/\//g, '-'));
-    const year = baseDate.getFullYear();
-    const month = baseDate.getMonth();
-
-    for(let di = 0; di < INVEST_DAYS.length; di++){
-      const day = INVEST_DAYS[di];
-      const d = new Date(year, month, day);
-      if(d < baseDate) continue;
-      const ds = year + '/' + String(month+1).padStart(2,'0') + '/' + String(day).padStart(2,'0');
-      const amount = eachInvest + (di === INVEST_DAYS.length - 1 ? remainder : 0);
-      if(amount <= 0) continue;
-      const price = findClosestPrice(ds, prices0050) || current0050Price;
-      if(price && price > 0){
-        cumShares += amount / price;
-        totalInvested0050 += amount;
-        investRecords.push({ d: ds, amount: amount, price: price, shares: cumShares, value: cumShares * price });
-      }
+    const ds = baseDate.getFullYear() + '/' + String(baseDate.getMonth()+1).padStart(2,'0') + '/01';
+    const price = findClosestPrice(ds, prices0050) || current0050Price;
+    if(price && price > 0){
+      cumShares += periodInvest / price;
+      totalInvested0050 += periodInvest;
+      investRecords.push({ d: ds, amount: periodInvest, price: price, shares: cumShares, value: cumShares * price });
     }
   }
 
@@ -712,7 +696,7 @@ async function renderDCAComparison(wn){
           fill: true, tension: 0.2, pointRadius: 2
         },
         {
-          label: '0050 定期定額模擬（每月2/12/22各1/3）',
+          label: '0050 定期定額模擬（每月1號投入）',
           data: dcaValues,
           borderColor: '#27ae60',
           backgroundColor: 'rgba(39,174,96,0.08)',
@@ -768,4 +752,6 @@ init();
 </script>
 </body>
 </html>
+
+
 
