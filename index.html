@@ -598,11 +598,8 @@ async function renderDCAComparison(wn){
 
   statusEl.innerHTML = '';
 
-  // 計算每週投入金額
-  const invests = [];
-  for(let i = 0; i < wn.length; i++){
-    invests.push(i === 0 ? wn[i].i : wn[i].i - wn[i-1].i);
-  }
+  // 從 wn 算出各期投入金額，分配到每月 2/12/22 號各 1/3
+  const INVEST_DAYS = [2, 12, 22];
 
   // 找最接近的 0050 價格
   function findClosestPrice(dateStr, priceMap){
@@ -622,28 +619,64 @@ async function renderDCAComparison(wn){
   const all0050Dates = Object.keys(prices0050).sort();
   const current0050Price = all0050Dates.length > 0 ? prices0050[all0050Dates[all0050Dates.length - 1]] : null;
 
+  // 照實際每期投入金額分配到 2/12/22
   let cumShares = 0;
-  const dcaValues = [];
-  let matchedCount = 0, missedInvest = 0;
+  const investRecords = [];
+  let totalInvested0050 = 0;
 
   for(let i = 0; i < wn.length; i++){
-    const amount = invests[i];
-    const price = findClosestPrice(wn[i].d, prices0050);
-    if(price && price > 0 && amount > 0){
-      cumShares += amount / price;
-      matchedCount++;
-    } else if(amount > 0) {
-      missedInvest += amount;
+    const periodInvest = i === 0 ? wn[i].i : wn[i].i - wn[i-1].i;
+    if(periodInvest <= 0) continue;
+
+    const eachInvest = Math.floor(periodInvest / 3);
+    const remainder = periodInvest - eachInvest * 3;
+
+    const baseDate = new Date(wn[i].d.replace(/\//g, '-'));
+    const year = baseDate.getFullYear();
+    const month = baseDate.getMonth();
+
+    for(let di = 0; di < INVEST_DAYS.length; di++){
+      const day = INVEST_DAYS[di];
+      const d = new Date(year, month, day);
+      if(d < baseDate) continue;
+      const ds = year + '/' + String(month+1).padStart(2,'0') + '/' + String(day).padStart(2,'0');
+      const amount = eachInvest + (di === INVEST_DAYS.length - 1 ? remainder : 0);
+      if(amount <= 0) continue;
+      const price = findClosestPrice(ds, prices0050) || current0050Price;
+      if(price && price > 0){
+        cumShares += amount / price;
+        totalInvested0050 += amount;
+        investRecords.push({ d: ds, amount: amount, price: price, shares: cumShares, value: cumShares * price });
+      }
     }
-    const weeklyPrice = price || current0050Price;
-    dcaValues.push(weeklyPrice && weeklyPrice > 0 ? cumShares * weeklyPrice : 0);
   }
 
-  const totalInvested = wn[wn.length - 1].i;
+  // 以週為單位產出時間序列（與 wn 同步）
+  const dcaValues = [];
+  for(let i = 0; i < wn.length; i++){
+    const wkDate = new Date(wn[i].d.replace(/\//g, '-'));
+    let latestRecord = null;
+    for(const rec of investRecords){
+      const recDate = new Date(rec.d.replace(/\//g, '-'));
+      if(recDate <= wkDate){
+        latestRecord = rec;
+      } else {
+        break;
+      }
+    }
+    if(latestRecord){
+      const latestPrice = findClosestPrice(wn[i].d, prices0050) || current0050Price || 0;
+      dcaValues.push(latestPrice > 0 ? latestRecord.shares * latestPrice : latestRecord.shares * (current0050Price || 0));
+    } else {
+      dcaValues.push(0);
+    }
+  }
+
+  const lastRecord = investRecords.length > 0 ? investRecords[investRecords.length - 1] : null;
+  const dcaValue = lastRecord ? lastRecord.value : 0;
   const fundValue = wn[wn.length - 1].a;
-  const dcaValue = dcaValues[dcaValues.length - 1] || 0;
-  const fundRoi = totalInvested > 0 ? ((fundValue - totalInvested) / totalInvested * 100) : 0;
-  const dcaRoi = totalInvested > 0 ? ((dcaValue - totalInvested) / totalInvested * 100) : 0;
+  const fundRoi = totalInvested0050 > 0 ? ((fundValue - totalInvested0050) / totalInvested0050 * 100) : 0;
+  const dcaRoi = totalInvested0050 > 0 ? ((dcaValue - totalInvested0050) / totalInvested0050 * 100) : 0;
 
   document.getElementById('dcaFundValue').textContent = 'NT$ ' + FN(fundValue, 0);
   document.getElementById('dca0050Value').textContent = 'NT$ ' + FN(dcaValue, 0);
@@ -663,13 +696,6 @@ async function renderDCAComparison(wn){
     dCard.className = 'cmp-card';
   }
 
-  if(missedInvest > 0){
-    const note = document.createElement('div');
-    note.className = 'anl-note';
-    note.textContent = '⚠️ 有 NT$ ' + FN(missedInvest, 0) + ' 因無對應 0050 股價資料未納入模擬（共 ' + matchedCount + '/' + wn.length + ' 期成功配對，使用前後 ±7 日最接近價格）';
-    document.getElementById('dcaSummary').after(note);
-  }
-
   // DCA 比較圖
   const ctx = document.getElementById('dcaChart').getContext('2d');
   if(dci) dci.destroy();
@@ -686,7 +712,7 @@ async function renderDCAComparison(wn){
           fill: true, tension: 0.2, pointRadius: 2
         },
         {
-          label: '0050 定期定額模擬',
+          label: '0050 定期定額模擬（每月2/12/22各1/3）',
           data: dcaValues,
           borderColor: '#27ae60',
           backgroundColor: 'rgba(39,174,96,0.08)',
@@ -694,7 +720,15 @@ async function renderDCAComparison(wn){
         },
         {
           label: '累計投入金額',
-          data: wn.map(w => w.i),
+          data: wn.map(w => {
+            let cum = 0;
+            for(const rec of investRecords){
+              const recDate = new Date(rec.d.replace(/\//g, '-'));
+              const wkDate = new Date(w.d.replace(/\//g, '-'));
+              if(recDate <= wkDate) cum += rec.amount;
+            }
+            return cum;
+          }),
           borderColor: '#4a90d9',
           borderDash: [5, 4],
           fill: false, tension: 0.2, pointRadius: 1
@@ -703,16 +737,14 @@ async function renderDCAComparison(wn){
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#5a6a7e', font: { size: 11 } } }, tooltip: { callbacks: { label: function(ctx) { let d=ctx.dataset.label||"", v=ctx.parsed.y||0; return d+': NT$ '+FN(v,0); } } } },
+      plugins: { legend: { labels: { color: '#5a6a7e', font: { size: 11 } } }, tooltip: { callbacks: { label: function(ctx) { let d=ctx.dataset.label||'', v=ctx.parsed.y||0; return d+': NT$ '+FN(v,0); } } } },
       scales: {
         x: { ticks: { color: '#8a9bb5', font: { size: 10 } }, grid: { color: '#f0f2f5' } },
         y: { ticks: { color: '#8a9bb5', callback: v => FN(v, 0) }, grid: { color: '#f0f2f5' } }
       }
     }
   });
-}
-
-// ========================
+}// ========================
 //  Tab 切換 & 初始化
 // ========================
 document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',function(){document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));this.classList.add('active');document.getElementById(this.dataset.tab).classList.add('active')})});
@@ -736,3 +768,4 @@ init();
 </script>
 </body>
 </html>
+
