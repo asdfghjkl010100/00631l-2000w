@@ -148,10 +148,24 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
 <div class="snap-card" id="heroProfitCard"><div class="sc-label">未實現損益</div><div class="sc-value" id="heroProfit">--</div><div class="sc-delta">資產價值 - 累計申購</div></div>
 <div class="snap-card gold"><div class="sc-label">整體報酬率</div><div class="sc-value" id="heroROI">--</div><div class="sc-delta">整體報酬表現</div></div>
 </div>
-<div class="info-card" style="margin-bottom:20px"><div style="margin-bottom:8px;font-size:0.82rem;color:#8a9bb5">投入 vs 目前資產比較</div>
-<div class="cmp-bar"><div class="bar bar-inv" id="comparisonInvestedBar"></div><div class="bar bar-cur" id="comparisonCurrentBar"></div></div>
-<div class="cmp-legend"><span><span class="legend-swatch" style="background:#4a90d9"></span>累計申購</span><span><span class="legend-swatch" style="background:#c8963e"></span>目前資產</span></div>
-</div>
+<!-- 目標追蹤 -->
+  <div class="section-title">目標追蹤</div>
+  <div class="section-sub">設定目標：NT$ 1億</div>
+  <div class="goal-card" id="goalCard">
+    <div class="goal-label">目標：NT$ 1億</div>
+    <div class="goal-progress-wrap">
+      <div class="goal-progress-bar" id="goalProgressBar" style="width:0%"></div>
+      <div class="goal-progress-label" id="goalProgressLabel">0.0%</div>
+    </div>
+    <div class="goal-stats">
+      <div class="goal-stat"><div class="gs-label">目前資產</div><div class="gs-value" id="goalCurrent">--</div></div>
+      <div class="goal-stat"><div class="gs-label">已達成</div><div class="gs-value" id="goalPercent">--</div></div>
+      <div class="goal-stat"><div class="gs-label">剩餘目標</div><div class="gs-value" id="goalRemain">--</div></div>
+      <div class="goal-stat"><div class="gs-label">預估達成</div><div class="gs-value" id="goalEta">--</div></div>
+    </div>
+  </div>
+
+  
 <div class="section-title">基金檔案</div>
 <div class="info-table-wrap"><table class="info-table">
 <tr><th>基金名稱</th><td>合資定期定額 · 台股國運基金</td><th>基金類型</th><td>合資投資組合</td></tr>
@@ -189,23 +203,6 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
 
 <!-- =================== 績效分析 新分頁 =================== -->
 <div class="tab-content" id="tabAnalysis">
-  <!-- 目標追蹤 -->
-  <div class="section-title">目標追蹤</div>
-  <div class="section-sub">設定目標：NT$ 1億</div>
-  <div class="goal-card" id="goalCard">
-    <div class="goal-label">目標：NT$ 1億</div>
-    <div class="goal-progress-wrap">
-      <div class="goal-progress-bar" id="goalProgressBar" style="width:0%"></div>
-      <div class="goal-progress-label" id="goalProgressLabel">0.0%</div>
-    </div>
-    <div class="goal-stats">
-      <div class="goal-stat"><div class="gs-label">目前資產</div><div class="gs-value" id="goalCurrent">--</div></div>
-      <div class="goal-stat"><div class="gs-label">已達成</div><div class="gs-value" id="goalPercent">--</div></div>
-      <div class="goal-stat"><div class="gs-label">剩餘目標</div><div class="gs-value" id="goalRemain">--</div></div>
-      <div class="goal-stat"><div class="gs-label">預估達成</div><div class="gs-value" id="goalEta">--</div></div>
-    </div>
-  </div>
-
   <!-- 風險指標 -->
   <div class="section-title">風險指標</div>
   <div class="section-sub">基於週資料計算</div>
@@ -750,6 +747,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
