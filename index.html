@@ -315,8 +315,6 @@ function RO(cv,msd,wn){
   document.getElementById('heroProfit').textContent='NT$ '+FN(pt,0);
   document.getElementById('heroROI').textContent=FR(rt);
   let pc=document.getElementById('heroProfitCard');pc.className='snap-card'+(pt>=0?' up':' down');
-  let mv=Math.max(it,ct)||1;document.getElementById('comparisonInvestedBar').style.width=(it/mv)*100+'%';
-  document.getElementById('comparisonCurrentBar').style.width=(ct/mv)*100+'%';
   document.getElementById('overviewFreshness').textContent=l?'最新更新 '+l.d:'資料更新中';
   document.getElementById('overviewHeroSubtitle').textContent=l?'累計申購 NT$ '+FN(it,0)+'，目前資產價值 NT$ '+FN(ct,0):'即時彙整 Google Sheets 資料';
   document.getElementById('infoInvested').textContent='NT$ '+FN(it,0);
