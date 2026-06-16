@@ -159,9 +159,7 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
 <tr><th>累計申購金額</th><td id="infoInvested">--</td><th>目前資產價值</th><td id="infoCurrent">--</td></tr>
 <tr><th>團員人數</th><td id="infoMemberCount">--</td><th>最新更新</th><td id="infoUpdateDate">--</td></tr>
 </table></div>
-<div style="margin-top:20px"><div class="section-title">團員績效摘要</div>
-<div class="table-wrap"><table id="memberSummaryTable"><thead><tr><th>成員</th><th>累計申購金額</th><th>持有單位數</th><th>目前資產價值</th><th>報酬率</th><th>每月建議申購</th></tr></thead>
-<tbody id="memberSummaryBody"></tbody></table></div></div></div>
+</div>
 <div class="tab-content" id="tabRatio">
 <div class="section-title">資產分布</div>
 <div class="info-grid">
@@ -741,6 +739,7 @@ async function init(){
 
     SEL.length = 1; // 保留第一個 placeholder
     CSV.mb.forEach((m,i)=>{let o=document.createElement('option');o.value=i;o.textContent=m.n;SEL.appendChild(o)});
+    BK.addEventListener('click',BKFn);
     SEL.addEventListener('change',function(e){let i=parseInt(e.target.value);if(!isNaN(i))SM(i,md,msd);else BKFn()});
     document.addEventListener('click',function(e){let r=e.target.closest('.clickable-row');if(r){let i=parseInt(r.dataset.idx);if(!isNaN(i)){SEL.value=i;SM(i,md,msd)}}});
 
@@ -752,6 +751,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
