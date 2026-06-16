@@ -535,36 +535,46 @@ async function fetch0050Prices() {
     } catch(e) {}
   }
 
-  // 從 Yahoo Finance 取得
-  try {
-    const startTs = Math.floor(new Date('2025-11-01').getTime() / 1000);
-    const endTs = Math.floor(new Date('2026-12-01').getTime() / 1000);
-    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/0050.TW?period1=' + startTs + '&period2=' + endTs + '&interval=1wk&includeAdjustedClose=true';
+  // 從 Yahoo Finance 取得（query1 → query2 → CORS proxy fallback）
+  const yahooUrls = [
+    'https://query1.finance.yahoo.com',
+    'https://query2.finance.yahoo.com',
+    'https://corsproxy.io/?'
+  ];
+  const startTs = Math.floor(new Date('2025-11-01').getTime() / 1000);
+  const endTs = Math.floor(new Date('2026-12-01').getTime() / 1000);
+  const yahooPath = '/v8/finance/chart/0050.TW?period1=' + startTs + '&period2=' + endTs + '&interval=1wk&includeAdjustedClose=true';
 
-    const resp = await fetch(url);
-    if(!resp.ok) throw new Error('HTTP ' + resp.status);
-    const json = await resp.json();
-    const result = json?.chart?.result?.[0];
-    if(!result) throw new Error('無資料');
+  for(const baseUrl of yahooUrls){
+    try {
+      const url = baseUrl === 'https://corsproxy.io/?'
+        ? baseUrl + encodeURIComponent('https://query1.finance.yahoo.com' + yahooPath)
+        : baseUrl + yahooPath;
+      const resp = await fetch(url);
+      if(!resp.ok) throw new Error('HTTP ' + resp.status);
+      const json = await resp.json();
+      const result = json?.chart?.result?.[0];
+      if(!result) throw new Error('無資料');
 
-    const timestamps = result.timestamp || [];
-    const adjCloses = result.indicators?.adjclose?.[0]?.adjclose || result.indicators?.quote?.[0]?.close || [];
+      const timestamps = result.timestamp || [];
+      const adjCloses = result.indicators?.adjclose?.[0]?.adjclose || result.indicators?.quote?.[0]?.close || [];
 
-    const prices = {};
-    for(let i = 0; i < timestamps.length; i++){
-      const d = new Date(timestamps[i] * 1000);
-      const ds = d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
-      if(adjCloses[i]) prices[ds] = adjCloses[i];
+      const prices = {};
+      for(let i = 0; i < timestamps.length; i++){
+        const d = new Date(timestamps[i] * 1000);
+        const ds = d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
+        if(adjCloses[i]) prices[ds] = adjCloses[i];
+      }
+      if(Object.keys(prices).length > 0){
+        document.getElementById('dcaSourceLabel').textContent = 'Yahoo Finance (0050.TW)';
+        return prices;
+      }
+    } catch(e) {
+      console.warn('0050 endpoint 失敗:', baseUrl, e.message);
     }
-    if(Object.keys(prices).length > 0){
-      document.getElementById('dcaSourceLabel').textContent = 'Yahoo Finance (0050.TW)';
-      return prices;
-    }
-    throw new Error('解析結果為空');
-  } catch(e) {
-    console.warn('0050 資料抓取失敗:', e);
-    return null;
   }
+  console.warn('0050 所有資料源皆失敗');
+  return null;
 }
 
 async function renderDCAComparison(wn){
