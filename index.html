@@ -327,7 +327,6 @@ function RO(cv,msd,wn){
   document.getElementById('infoStartDate').textContent=cv.sd||'--';
   document.getElementById('infoMemberCount').textContent=msd.length+' 人';
   document.getElementById('infoUpdateDate').textContent=l?l.d:'--';
-  document.getElementById('memberSummaryBody').innerHTML=msd.map((m,i)=>'<tr class="clickable-row" data-idx="'+i+'"><td>'+EH(m.n)+'</td><td>NT$ '+FN(m.i,0)+'</td><td>'+FN(m.u,5)+'</td><td>NT$ '+FN(m.v,0)+'</td><td>'+FR(m.r)+'</td><td>'+(m.m?'NT$ '+FN(m.m,0):'--')+'</td></tr>').join('');
   let sc=cv.ca||0,se=cv.sv||0,sa=sc+se||1;
   document.getElementById('ratioCash').textContent='NT$ '+FN(sc,0);
   document.getElementById('ratioStock').textContent='NT$ '+FN(se,0);
