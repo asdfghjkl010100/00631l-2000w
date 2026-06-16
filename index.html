@@ -284,7 +284,7 @@ function PC(t){return t.trim().split('\n').map(r=>{let c=[],s='',q=!1;for(let ch
 function EH(s){let d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function PD(s){if(!s)return 0;let p=String(s).trim().split('/').map(Number);return p[0]*10000+p[1]*100+p[2]}
 function SF(v){let n=parseFloat(String(v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
-function FN(n,d){if(n==null||isNaN(n))return'--';if(Math.abs(n)>=1e8)return(n/1e8).toFixed(d)+'億';if(Math.abs(n)>=1e4)return(n/1e4).toFixed(d)+'萬';return n.toFixed(d)}
+function FN(n,d){if(n==null||isNaN(n))return'--';if(Math.abs(n)>=1e8)return(n/1e8).toFixed(d)+'億';if(Math.abs(n)>=1000000)return(n/10000).toFixed(d)+'萬';return n.toFixed(d)}
 function FR(n){if(n==null||isNaN(n))return'--';return(n>=0?'+':'')+n.toFixed(2)+'%'}
 
 // ========================
