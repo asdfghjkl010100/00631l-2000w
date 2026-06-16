@@ -734,6 +734,7 @@ async function init(){
     SEL.length = 1; // 保留第一個 placeholder
     CSV.mb.forEach((m,i)=>{let o=document.createElement('option');o.value=i;o.textContent=m.n;SEL.appendChild(o)});
     BK.addEventListener('click',BKFn);
+    document.getElementById('navOverview').addEventListener('click',function(e){e.preventDefault();BKFn();});
     SEL.addEventListener('change',function(e){let i=parseInt(e.target.value);if(!isNaN(i))SM(i,md,msd);else BKFn()});
     document.addEventListener('click',function(e){let r=e.target.closest('.clickable-row');if(r){let i=parseInt(r.dataset.idx);if(!isNaN(i)){SEL.value=i;SM(i,md,msd)}}});
 
@@ -745,6 +746,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
