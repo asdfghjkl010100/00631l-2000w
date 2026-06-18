@@ -146,15 +146,20 @@ DEBUG_SHEETS = "未測試"
 
 def _run_loop():
     import time
-    global LAST_CHECK
-    print(f"[Monitor] 排程器啟動，每 {Config.MONITOR_INTERVAL_SECONDS} 秒檢查一次", file=sys.stderr)
+    from datetime import datetime, timezone, timedelta
+    TZ = timezone(timedelta(hours=8))
+    print("[Monitor] 排程器啟動，每週日 20:00 檢查一次", file=sys.stderr)
     while True:
-        try:
-            check_for_updates()
-        except Exception as ex:
-            print(f"[Monitor] 執行錯誤：{ex}", file=sys.stderr)
-        LAST_CHECK = time.time()
-        time.sleep(Config.MONITOR_INTERVAL_SECONDS)
+        now = datetime.now(TZ)
+        if now.weekday() == 6 and now.hour == 20 and now.minute == 0:
+            try:
+                check_for_updates()
+            except Exception as ex:
+                print(f"[Monitor] 執行錯誤：{ex}", file=sys.stderr)
+            LAST_CHECK = time.time()
+            time.sleep(61)
+        else:
+            time.sleep(30)
 
 def start_scheduler():
     import threading
