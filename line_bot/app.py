@@ -147,6 +147,7 @@ DEBUG_SHEETS = "未測試"
 def _run_loop():
     import time
     from datetime import datetime, timezone, timedelta
+    global LAST_CHECK
     TZ = timezone(timedelta(hours=8))
     print("[Monitor] 排程器啟動，每週日 20:00 檢查一次", file=sys.stderr)
     # 啟動時先做一次初始快取（建立 baseline）
@@ -163,6 +164,7 @@ def _run_loop():
                 check_for_updates()
             except Exception as ex:
                 print(f"[Monitor] 執行錯誤：{ex}", file=sys.stderr)
+            global LAST_CHECK
             LAST_CHECK = time.time()
             time.sleep(360)  # 睡 6 分鐘避開重複觸發
         else:
