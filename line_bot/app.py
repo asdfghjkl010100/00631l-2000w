@@ -149,15 +149,22 @@ def _run_loop():
     from datetime import datetime, timezone, timedelta
     TZ = timezone(timedelta(hours=8))
     print("[Monitor] 排程器啟動，每週日 20:00 檢查一次", file=sys.stderr)
+    # 啟動時先做一次初始快取（建立 baseline）
+    try:
+        check_for_updates()
+    except Exception as ex:
+        print(f"[Monitor] 初始執行錯誤：{ex}", file=sys.stderr)
+    LAST_CHECK = time.time()
+    # 每週日 20:00-20:05 之間執行
     while True:
         now = datetime.now(TZ)
-        if now.weekday() == 6 and now.hour == 20 and now.minute == 0:
+        if now.weekday() == 6 and now.hour == 20 and 0 <= now.minute <= 5:
             try:
                 check_for_updates()
             except Exception as ex:
                 print(f"[Monitor] 執行錯誤：{ex}", file=sys.stderr)
             LAST_CHECK = time.time()
-            time.sleep(61)
+            time.sleep(360)  # 睡 6 分鐘避開重複觸發
         else:
             time.sleep(30)
 
