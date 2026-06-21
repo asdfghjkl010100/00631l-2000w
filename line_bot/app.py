@@ -10,7 +10,7 @@ from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 from .config import Config
-from .sheets_monitor import fetch_all_data, compute_cache_fingerprint, load_cache, save_cache, build_update_message
+from .sheets_monitor import fetch_all_data, compute_cache_fingerprint, load_cache, save_cache, build_update_message, fetch_weekly_comparison
 from .messages import build_status_message
 
 app = Flask(__name__)
@@ -63,10 +63,7 @@ def maybe_rotate_weekly(cv: dict):
 
 
 def get_weekly_cv() -> dict | None:
-    snap = load_weekly_snapshot()
-    if snap:
-        return snap.get("cv")
-    return None
+    return fetch_weekly_comparison()
 
 
 # ===================
@@ -146,8 +143,8 @@ DEBUG_SHEETS = "未測試"
 
 def _run_loop():
     import time
-    from datetime import datetime, timezone, timedelta
     global LAST_CHECK
+    from datetime import datetime, timezone, timedelta
     TZ = timezone(timedelta(hours=8))
     print("[Monitor] 排程器啟動，每週日 20:00 檢查一次", file=sys.stderr)
     # 啟動時先做一次初始快取（建立 baseline）
@@ -164,7 +161,6 @@ def _run_loop():
                 check_for_updates()
             except Exception as ex:
                 print(f"[Monitor] 執行錯誤：{ex}", file=sys.stderr)
-            global LAST_CHECK
             LAST_CHECK = time.time()
             time.sleep(360)  # 睡 6 分鐘避開重複觸發
         else:

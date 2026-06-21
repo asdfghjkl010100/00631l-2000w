@@ -124,6 +124,29 @@ def compute_cache_fingerprint() -> str:
     return _fingerprint(combined)
 
 
+
+def fetch_weekly_comparison():
+    """從歷史紀錄 CSV 抓上週 vs 本週的資料，回傳 dict 或 None"""
+    import csv, io
+    try:
+        text = _fetch_csv(Config.CSV_WN)
+        rows = _parse_csv(text)
+        # 找最後兩筆有日期+資產的 row
+        records = []
+        for r in rows:
+            if len(r) >= 3:
+                try:
+                    float(r[1])
+                    records.append((r[0].strip(), float(r[1]), float(r[2]), float(r[3]) if len(r) > 3 else 0))
+                except (ValueError, IndexError):
+                    continue
+        if len(records) >= 2:
+            w1, w2 = records[-2], records[-1]
+            return {"ta": w2[1], "sp": w2[3]}
+    except Exception as e:
+        print(f"[Weekly] 無法讀取歷史資料：{e}", file=__import__("sys").stderr)
+    return None
+
 def load_cache() -> dict:
     """載入上次的快取資料"""
     if os.path.exists(Config.CACHE_FILE):
