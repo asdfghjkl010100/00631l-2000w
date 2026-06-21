@@ -147,6 +147,26 @@ def fetch_weekly_comparison():
         print(f"[Weekly] 無法讀取歷史資料：{e}", file=__import__("sys").stderr)
     return None
 
+
+def fetch_last_history_date():
+    """從歷史紀錄 CSV 讀取最後一筆資料的日期"""
+    import csv, io
+    from datetime import datetime
+    try:
+        text = _fetch_csv(Config.CSV_WN)
+        rows = _parse_csv(text)
+        for r in reversed(rows):
+            if len(r) >= 2:
+                d = r[0].strip()
+                try:
+                    return datetime.strptime(d, "%Y/%m/%d").replace(tzinfo=TZ)
+                except ValueError:
+                    continue
+    except:
+        pass
+    return None
+
+
 def load_cache() -> dict:
     """載入上次的快取資料"""
     if os.path.exists(Config.CACHE_FILE):
@@ -176,6 +196,15 @@ def _safe_float(v) -> float:
 
 def build_update_message(old: dict, new: dict) -> str | None:
     """比對新舊資料，產出更新訊息。沒有變更則回傳 None"""
+    # 檢查最後一筆資料日期是否為當週週日
+    last_date = fetch_last_history_date()
+    if last_date:
+        today = __import__("datetime").datetime.now(TZ)
+        # 只允許週日或當天
+        diff = (today - last_date).days
+        if diff > 7:
+            print(f"[Monitor] 最新資料日期 {last_date.date()} 與今天 {today.date()} 差距 {diff} 天，跳過推播", file=__import__("sys").stderr)
+            return None
     parts = []
     ocv = old.get('cv', {})
     ncv = new.get('cv', {})
