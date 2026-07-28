@@ -419,7 +419,7 @@ function renderTargetTracker(ct, wn){
 // ========================
 //  風險指標
 // ========================
-function renderRiskMetrics(wn){
+function renderRiskMetrics(wn, comparisonValues = null){
   if(!wn || wn.length < 3){
     document.querySelectorAll('.risk-card .rc-value').forEach(el => el.textContent = '--');
     return;
@@ -488,7 +488,17 @@ function renderRiskMetrics(wn){
         borderColor: '#e74c3c',
         backgroundColor: 'rgba(231,76,60,0.12)',
         fill: true, tension: 0.2, pointRadius: 1
-      }]
+      }].concat(comparisonValues && comparisonValues.length === wn.length ? [{
+        label: '0050 回測回撤幅度',
+        data: comparisonValues.map((v, i) => {
+          const prior = comparisonValues.slice(0, i + 1);
+          const peak = Math.max(...prior);
+          return peak > 0 ? -((peak - v) / peak) * 100 : 0;
+        }),
+        borderColor: '#27ae60',
+        backgroundColor: 'transparent',
+        fill: false, tension: 0.2, pointRadius: 1
+      }] : [])
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -669,6 +679,7 @@ async function renderDCAComparison(wn, presetPrices = null){
       dcaValues.push(i === 0 ? wn[i].i : 0);
     }
   }
+  renderRiskMetrics(wn, dcaValues);
 
   const dcaValue = cumShares > 0 && current0050Price > 0 ? cumShares * current0050Price : 0;
   const fundValue = wn[wn.length - 1].a;
