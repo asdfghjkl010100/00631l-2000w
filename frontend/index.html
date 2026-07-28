@@ -289,14 +289,12 @@ async function FC(u){let s=new AbortController();let t=setTimeout(()=>s.abort(),
 
 async function loadAllData(){
     LM.innerHTML='<div class="spinner"></div><div>讀取中...</div>';
-    const[ts,msText,wnText,...mbTexts]=await Promise.all([FC(CSV.core),FC(CSV.ms),FC(CSV.wn),...CSV.mb.map(m=>FC(m.u))]);
-    const r1=PC(ts),r2=PC(msText),r3=PC(wnText);
-    const cvMap={};r1.forEach(r=>{if(r[0])cvMap[String(r[0]).trim()]=SF(r[1])});
-    const cv={ta:cvMap['合資總資產']||0,ca:cvMap['帳上現金']||0,sv:(cvMap['00631L 現價']||0)*(cvMap['合資總持股數']||0),sd:'2025/12/21'};
-    const msd=[];for(let i=1;i<r2.length;i++){let c=r2[i];if(c.length<6)continue;msd.push({n:c[0],i:SF(c[1]),u:SF(c[2]),v:SF(c[3]),r:SF(c[4]),m:SF(c[5])})}
-    const wn=[];for(let i=1;i<r3.length;i++){let c=r3[i],ds=c[0].trim();if(!/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds))continue;let a=SF(c[1]);if(!a)continue;wn.push({d:ds,dk:PD(ds),a:a,i:SF(c[2]),n:SF(c[3])})}
-    const md=[];for(let j=0;j<CSV.mb.length;j++){const mbText=mbTexts[j],r=PC(mbText),iv=[];let cum=0;for(let i=1;i<r.length;i++){let c=r[i],ds=c[0].trim();if(/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(ds)&&SF(c[1])>0){cum+=SF(c[3]);iv.push({d:ds,dk:PD(ds),a:SF(c[1]),n:SF(c[2]),u:SF(c[3]),cu:cum})}}md.push(iv)}
-    return {cv,msd,wn,md};
+    const api='https://zero0631l-2000w.onrender.com/api/dashboard';
+    const r=await fetch(api,{cache:'no-store'});
+    if(!r.ok)throw new Error('後端 API 回應 '+r.status);
+    const data=await r.json();
+    if(data.status!=='ok')throw new Error('後端資料狀態異常');
+    return data;
 }
 
 // ========================

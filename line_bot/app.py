@@ -11,7 +11,7 @@ from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 from .config import Config
-from .sheets_monitor import fetch_all_data, compute_cache_fingerprint, load_cache, save_cache, build_update_message, fetch_weekly_comparison, fetch_last_history_date
+from .sheets_monitor import fetch_all_data, fetch_dashboard_data, compute_cache_fingerprint, load_cache, save_cache, build_update_message, fetch_weekly_comparison, fetch_last_history_date
 from .messages import build_status_message
 
 app = Flask(__name__)
@@ -25,8 +25,9 @@ handler = WebhookHandler(Config.LINE_CHANNEL_SECRET)
 
 def push_message(text: str):
     to = Config.LINE_GROUP_ID or Config.LINE_USER_ID
-    if to:
-        messaging_api.push_message(PushMessageRequest(to=to, messages=[TextMessage(text=text)]))
+    if not to:
+        raise RuntimeError("未設定 LINE_GROUP_ID 或 LINE_USER_ID")
+    messaging_api.push_message(PushMessageRequest(to=to, messages=[TextMessage(text=text)]))
 
 
 # ===================
@@ -106,6 +107,27 @@ def health():
     import time
     since = f"{time.time() - LAST_CHECK:.0f}秒前" if LAST_CHECK else "尚未執行"
     return {"status": "ok", "checks": CHECK_COUNT, "last": since, "sheets": DEBUG_SHEETS}
+
+
+@app.after_request
+def add_cors_headers(response):
+    if request.path.startswith('/api/'):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Cache-Control'] = 'public, max-age=60'
+    return response
+
+
+_dashboard_cache = {'expires': 0, 'data': None}
+
+
+@app.route('/api/dashboard', methods=['GET'])
+def dashboard_api():
+    import time
+    now = time.time()
+    if _dashboard_cache['data'] is None or now >= _dashboard_cache['expires']:
+        _dashboard_cache['data'] = fetch_dashboard_data()
+        _dashboard_cache['expires'] = now + 60
+    return {'status': 'ok', 'updated_at': datetime.now(timezone(timedelta(hours=8))).isoformat(), **_dashboard_cache['data']}
 
 
 @app.route("/scheduled-check", methods=["POST"])

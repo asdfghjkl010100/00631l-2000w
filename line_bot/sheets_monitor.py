@@ -136,6 +136,30 @@ def fetch_all_data() -> dict:
     return {'cv': cv, 'msd': msd}
 
 
+def fetch_dashboard_data() -> dict:
+    """擷取前端儀表板需要的完整資料。"""
+    data = fetch_all_data()
+    history = []
+    rows = _parse_csv(_fetch_csv(Config.CSV_WN))
+    for r in rows:
+        if len(r) < 4:
+            continue
+        try:
+            date = datetime.strptime(r[0].strip(), '%Y/%m/%d')
+            history.append({
+                'd': r[0].strip(),
+                'dk': date.strftime('%Y%m%d'),
+                'a': _safe_float(r[1]),
+                'i': _safe_float(r[2]),
+                'n': _safe_float(r[3]),
+            })
+        except ValueError:
+            continue
+    data['wn'] = history
+    data['md'] = [fetch_member_detail(gid) for gid in Config.MEMBER_GIDS.values()]
+    return data
+
+
 def compute_cache_fingerprint() -> str:
     """計算所有 CSV 的整體指紋（用來偵測是否有任何變更）"""
     texts = []
