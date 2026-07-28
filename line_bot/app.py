@@ -87,6 +87,12 @@ def callback():
         handler.handle(request.get_data(as_text=True), signature)
     except InvalidSignatureError:
         abort(400)
+    except KeyError as e:
+        if e.args == ("events",):
+            logger.warning("LINE webhook 測試請求沒有 events，視為驗證成功")
+            return "OK"
+        logger.exception("LINE webhook 處理失敗")
+        abort(500)
     except Exception:
         logger.exception("LINE webhook 處理失敗")
         abort(500)
