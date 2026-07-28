@@ -53,7 +53,7 @@ def fetch_core_data() -> dict:
     """擷取核心資料（合資總資產、現金、股價、持股數）"""
     text = _fetch_csv(Config.CSV_CORE)
     rows = _parse_csv(text)
-    cv = {'ta': 0, 'ca': 0, 'sv': 0, 'sp': 0, 'sh': 0}
+    cv = {'ta': 0, 'ca': 0, 'sv': 0, 'sp': 0, 'sh': 0, 'nav': 0, 'units': 0}
     found = set()
     for r in rows:
         if len(r) < 2:
@@ -62,6 +62,12 @@ def fetch_core_data() -> dict:
         val = _safe_float(r[1])
         if key == '合資總資產':
             cv['ta'] = val
+            found.add(key)
+        elif key == '當前單位淨值':
+            cv['nav'] = val
+            found.add(key)
+        elif key == '總發行單位':
+            cv['units'] = val
             found.add(key)
         elif key == '帳上現金':
             cv['ca'] = val
@@ -74,7 +80,7 @@ def fetch_core_data() -> dict:
             cv['sh'] = val
             cv['sv'] = cv['sp'] * val
             found.add(key)
-    required = {'合資總資產', '帳上現金', '00631L 現價', '合資總持股數'}
+    required = {'合資總資產', '帳上現金', '00631L 現價', '合資總持股數', '當前單位淨值', '總發行單位'}
     if not required.issubset(found):
         raise ValueError('核心 CSV 缺少必要欄位')
     return cv
@@ -157,6 +163,9 @@ def fetch_dashboard_data() -> dict:
             continue
     data['wn'] = history
     data['md'] = [fetch_member_detail(gid) for gid in Config.MEMBER_GIDS.values()]
+    from .financial import build_snapshot
+    data['cv']['sourceUpdatedAt'] = datetime.now(TZ).isoformat()
+    data['snapshot'] = build_snapshot(data['cv'], history, data['md'], list(Config.MEMBER_GIDS))
     data['p0050'] = fetch_0050_prices(history)
     return data
 
