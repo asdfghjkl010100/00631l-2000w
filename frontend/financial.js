@@ -9,7 +9,8 @@
     const annualReturn = years > 0 ? (valid.at(-1).n / valid[0].n) ** (1 / years) - 1 : 0;
     return {mdd:-mdd, volatility:vol, annualReturn, sharpe:vol?(annualReturn-riskFree)/vol:0, riskFree, years, drawdowns, warning:years<1};
   }
-  function goalScenarios(current, monthly, target=100000000) { return [['保守',.03],['中性',.07],['樂觀',.12]].map(([label,rate])=>{const r=(1+rate)**(1/12)-1;let value=current,months=0;while(value<target&&months<1200){value=value*(1+r)+monthly;months++;}return {label,rate,months:value>=target?months:null};}); }
-  function nextTradingDate(date, prices) { const d=new Date(date.replaceAll('/','-')+'T00:00:00'); for(let i=0;i<=7;i++){const x=new Date(d);x.setDate(d.getDate()+i);const k=x.getFullYear()+'/'+String(x.getMonth()+1).padStart(2,'0')+'/'+String(x.getDate()).padStart(2,'0');if(prices[k]>0)return k;}return null; }
-  root.Financial = {navMetrics, goalScenarios, nextTradingDate};
+  function dateKey(value) { const p=String(value||'').trim().split(/[\/-]/).map(Number); return p.length===3&&p.every(Number.isFinite)?`${p[0]}/${String(p[1]).padStart(2,'0')}/${String(p[2]).padStart(2,'0')}`:null; }
+  function goalScenarios(current, monthly, target=100000000) { return [['保守',.03],['中性',.07],['樂觀',.12]].map(([label,rate])=>{const r=(1+rate)**(1/12)-1;let value=current,months=0;while(value<target&&months<1200){value=value*(1+r)+monthly;months++;}return {label,rate,months:value>=target?months:null,tooLong:value<target};}); }
+  function nextTradingDate(date, prices) { const key=dateKey(date); if(!key)return null; const d=new Date(key.replaceAll('/','-')+'T00:00:00'); for(let i=0;i<=7;i++){const x=new Date(d);x.setDate(d.getDate()+i);const k=x.getFullYear()+'/'+String(x.getMonth()+1).padStart(2,'0')+'/'+String(x.getDate()).padStart(2,'0');const price=prices[k]??prices[k.replaceAll('/','-')];if(price>0)return {date:k,price};}return null; }
+  root.Financial = {navMetrics,goalScenarios,nextTradingDate,dateKey};
 })(window);

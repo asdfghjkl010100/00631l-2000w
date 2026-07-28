@@ -166,7 +166,8 @@ def fetch_dashboard_data() -> dict:
     from .financial import build_snapshot
     data['cv']['sourceUpdatedAt'] = datetime.now(TZ).isoformat()
     data['snapshot'] = build_snapshot(data['cv'], history, data['md'], list(Config.MEMBER_GIDS))
-    data['p0050'] = fetch_0050_prices(history)
+    cashflow_dates = [{'d': record['d']} for records in data['md'] for record in records]
+    data['p0050'] = fetch_0050_prices(history + cashflow_dates)
     return data
 
 

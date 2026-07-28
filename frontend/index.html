@@ -120,6 +120,7 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
 .anl-note{background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;font-size:0.82rem;color:#8a6d00;margin-bottom:16px;line-height:1.6}
 .anl-error{background:#fdecea;border:1px solid #f5c6cb;border-radius:8px;padding:12px 16px;font-size:0.82rem;color:#a94442;margin-bottom:16px;line-height:1.6}
 .snapshot-warning{background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:10px 14px;color:#735c00;margin-bottom:16px;font-size:.85rem;line-height:1.6}
+.chart-summary{font-size:.78rem;color:#5a6a7e;margin-top:8px;line-height:1.5}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #1a56db;outline-offset:2px}
 @media(max-width:480px){.container{padding:12px}.navbar{padding:0 12px}.nav-inner{height:auto;min-height:56px;gap:8px}.nav-links{overflow-x:auto;max-width:70vw}.tabs{overflow-x:auto}.tab-btn{flex:0 0 105px}.chart-row{grid-template-columns:minmax(0,1fr)}.chart-box{min-width:0;padding:12px}.chart-box canvas{max-width:100%}.snapshot-grid,.risk-grid,.cmp-summary{gap:8px}.snap-card,.risk-card,.cmp-card{padding:12px 8px}.sc-value{font-size:1.1rem!important}}
@@ -137,17 +138,18 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #1a5
 <main>
 <div id="overviewSection">
 <div class="fund-header">
-<div class="fund-header-left"><div class="fund-code">台股國運基金 <small>00631L</small></div><div class="fund-name">目標總資產一億元</div></div>
+<div class="fund-header-left"><h1 class="fund-code">台股國運基金 <small>00631L</small></h1><div class="fund-name">目標總資產一億元</div></div>
 <div class="fund-header-right"><div class="fund-badge" id="overviewFreshness">資料更新中</div><div class="fund-update" id="overviewHeroSubtitle">即時彙整 Google Sheets 資料</div></div>
 </div>
 <div class="tabs" role="tablist" aria-label="基金資訊分頁">
-<button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tabInfo" data-tab="tabInfo">基本資訊</button>
-<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabRatio" data-tab="tabRatio">持股比重</button>
-<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabCompare" data-tab="tabCompare">資產與淨值</button>
-<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabNAV" data-tab="tabNAV">歷史淨值</button>
-<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabAnalysis" data-tab="tabAnalysis">績效與比較</button>
+<button id="tabInfoBtn" class="tab-btn active" role="tab" tabindex="0" aria-selected="true" aria-controls="tabInfo" data-tab="tabInfo">基本資訊</button>
+<button id="tabRatioBtn" class="tab-btn" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabRatio" data-tab="tabRatio">持股比重</button>
+<button id="tabCompareBtn" class="tab-btn" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabCompare" data-tab="tabCompare">資產與淨值</button>
+<button id="tabNAVBtn" class="tab-btn" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabNAV" data-tab="tabNAV">歷史淨值</button>
+<button id="tabAnalysisBtn" class="tab-btn" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabAnalysis" data-tab="tabAnalysis">績效與比較</button>
 </div>
-<div class="tab-content active" role="tabpanel" id="tabInfo">
+<div id="snapshotNotice" class="snapshot-warning" role="status" aria-live="polite">資料一致性檢查中...</div>
+<div class="tab-content active" role="tabpanel" aria-labelledby="tabInfoBtn" id="tabInfo">
 <div class="snapshot-grid" id="heroStats">
 <div class="snap-card"><div class="sc-label">累計申購金額</div><div class="sc-value" id="heroInvested">--</div><div class="sc-delta">來自 Google Sheets</div></div>
 <div class="snap-card gold"><div class="sc-label">目前資產價值</div><div class="sc-value" id="heroCurrent">--</div><div class="sc-delta">當前市值 / 淨值換算</div></div>
@@ -155,7 +157,7 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #1a5
 <div class="snap-card gold"><div class="sc-label">整體報酬率</div><div class="sc-value" id="heroROI">--</div><div class="sc-delta">整體報酬表現</div></div>
 </div>
 <!-- 目標追蹤 -->
-  <div class="section-title">目標追蹤</div>
+  <h2 class="section-title">目標追蹤</h2>
   <div class="section-sub">設定目標：NT$ 1億</div>
   <div class="goal-card" id="goalCard">
     <div class="goal-label">目標：NT$ 1億</div>
@@ -172,7 +174,7 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #1a5
   </div>
 
   
-<div class="section-title">基金檔案</div>
+<h2 class="section-title">基金檔案</h2>
 <div class="info-table-wrap"><table class="info-table">
 <tr><th>基金名稱</th><td>台股國運基金</td><th>基金類型</th><td>合資投資組合</td></tr>
 <tr><th>標的指數</th><td>00631L 元大台灣50正2</td><th>成立日期</th><td id="infoStartDate">--</td></tr>
@@ -180,37 +182,37 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #1a5
 <tr><th>團員人數</th><td id="infoMemberCount">--</td><th>最新更新</th><td id="infoUpdateDate">--</td></tr>
 </table></div>
 </div>
-<div class="tab-content" id="tabRatio">
-<div class="section-title">資產分布</div>
+<div class="tab-content" role="tabpanel" aria-labelledby="tabRatioBtn" id="tabRatio">
+<h2 class="section-title">資產分布</h2>
 <div class="info-grid">
 <div class="info-card"><div class="ic-label">現金占比</div><div class="ic-value" id="ratioCash">--</div><div class="ic-sub">可動用資金</div></div>
 <div class="info-card"><div class="ic-label">股票曝險</div><div class="ic-value" id="ratioStock">--</div><div class="ic-sub">透過 00631L 持有</div></div>
 <div class="info-card"><div class="ic-label">總資產</div><div class="ic-value" id="ratioTotal">--</div><div class="ic-sub">合資總市值</div></div>
 <div class="info-card"><div class="ic-label">曝險比例</div><div class="ic-value" id="ratioExposure">--</div><div class="ic-sub">股票曝險 / 總資產</div></div>
 </div>
-<div class="chart-row"><div class="chart-box"><div class="chart-title">資產配置</div><canvas id="pieChart"></canvas></div><div class="chart-box"><div class="chart-title">投入 vs 目前資產</div><canvas id="comparisonChart"></canvas></div></div>
-<div class="section-title">成員資產占比</div>
+<div class="chart-row"><div class="chart-box"><div class="chart-title">資產配置</div><canvas id="pieChart" aria-describedby="pieChartSummary"></canvas><p class="chart-summary" id="pieChartSummary">圓餅圖：比較現金與股票曝險占總資產的比例。</p></div><div class="chart-box"><div class="chart-title">投入 vs 目前資產</div><canvas id="comparisonChart" aria-describedby="comparisonChartSummary"></canvas><p class="chart-summary" id="comparisonChartSummary">長條圖：比較累計申購金額與目前快照資產價值。</p></div></div>
+<h2 class="section-title">成員資產占比</h2>
 <div class="table-wrap"><table id="ratioMemberTable"><thead><tr><th>成員</th><th>累計申購</th><th>占比</th><th>目前資產價值</th><th>占比</th><th>損益</th></tr></thead><tbody id="ratioMemberBody"></tbody></table></div></div>
-<div class="tab-content" id="tabCompare">
-<div class="section-title">淨值、資產、指數比較</div>
-<div class="chart-row"><div class="chart-box"><div class="chart-title">總資產 vs 累計申購走勢</div><canvas id="overviewChart"></canvas></div><div class="chart-box"><div class="chart-title">每週淨值變化</div><canvas id="indexCompareChart"></canvas></div></div>
+<div class="tab-content" role="tabpanel" aria-labelledby="tabCompareBtn" id="tabCompare">
+<h2 class="section-title">淨值、資產、指數比較</h2>
+<div class="chart-row"><div class="chart-box"><div class="chart-title">歷史總資產 vs 累計申購走勢</div><canvas id="overviewChart" aria-describedby="overviewChartSummary"></canvas><p class="chart-summary" id="overviewChartSummary">折線圖：顯示每週歷史資產總值與累計申購金額，不代表目前快照。</p></div><div class="chart-box"><div class="chart-title">每週淨值變化</div><canvas id="indexCompareChart" aria-describedby="indexCompareChartSummary"></canvas><p class="chart-summary" id="indexCompareChartSummary">長條圖：顯示每週單位淨值報酬率。</p></div></div>
 <div class="info-card"><div class="ic-label">備註</div><div class="ic-sub" style="margin-top:4px;line-height:1.7">圖一：總資產價值與累計申購金額比較圖<br>圖二：每週單位淨值變化，排除每月投入金額影響<br>資料來源：Google Sheets，資料僅供參考。</div></div></div>
-<div class="tab-content" id="tabNAV">
-<div class="section-title">歷史淨值</div>
+<div class="tab-content" role="tabpanel" aria-labelledby="tabNAVBtn" id="tabNAV">
+<h2 class="section-title">歷史淨值</h2>
 <div class="info-grid">
-<div class="info-card"><div class="ic-label">最新資產價值</div><div class="ic-value" id="navLatestValue">--</div><div class="ic-sub">最新一期</div></div>
+<div class="info-card"><div class="ic-label">最近一期歷史資產</div><div class="ic-value" id="navLatestValue">--</div><div class="ic-sub">歷史淨值日期</div></div>
 <div class="info-card"><div class="ic-label">累計申購金額</div><div class="ic-value" id="navTotalInvested">--</div><div class="ic-sub">總投入成本</div></div>
 <div class="info-card"><div class="ic-label">資料筆數</div><div class="ic-value" id="navDataCount">--</div><div class="ic-sub">週資料</div></div>
 <div class="info-card"><div class="ic-label">最新日期</div><div class="ic-value" id="navLatestDate">--</div><div class="ic-sub">最近更新</div></div>
 </div>
-<div class="chart-box" style="margin-bottom:20px"><div class="chart-title">每週淨值走勢</div><canvas id="navChart"></canvas></div>
-<div class="section-title">歷史明細</div>
+<div class="chart-box" style="margin-bottom:20px"><div class="chart-title">每週淨值走勢</div><canvas id="navChart" aria-describedby="navChartSummary"></canvas><p class="chart-summary" id="navChartSummary">折線圖：顯示每週每單位淨值走勢。</p></div>
+<h2 class="section-title">歷史明細</h2>
 <div class="nav-table-wrap"><table id="navDetailTable"><thead><tr><th>日期</th><th>資產價值</th><th>累計申購</th><th>淨值 (每單位)</th><th>單位數</th></tr></thead><tbody id="navDetailBody"></tbody></table></div></div>
 
 <!-- =================== 績效分析 新分頁 =================== -->
-<div class="tab-content" id="tabAnalysis">
+<div class="tab-content" role="tabpanel" aria-labelledby="tabAnalysisBtn" id="tabAnalysis">
   <!-- 風險指標 -->
-  <div class="section-title">風險指標</div>
+  <h2 class="section-title">風險指標</h2>
   <div class="section-sub">基於週資料計算</div>
   <div class="risk-grid" id="riskGrid">
     <div class="risk-card" id="riskMdd"><div class="rc-label">最大回撤 (MDD)</div><div class="rc-value">--</div><div class="rc-sub">歷史最高點回落幅度</div></div>
@@ -220,22 +222,22 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #1a5
   </div>
   <div class="chart-box" style="margin-bottom:20px">
     <div class="chart-title">資產回撤走勢</div>
-    <canvas id="drawdownChart"></canvas>
+    <canvas id="drawdownChart" aria-describedby="drawdownChartSummary"></canvas><p class="chart-summary" id="drawdownChartSummary">折線圖：顯示淨值相對歷史高點的回撤幅度。</p>
   </div>
 
   <!-- 0050 定期定額比較 -->
-  <div class="section-title">0050 定期定額比較</div>
-  <div class="section-sub">相同投入金額與日期，每月1號以開盤價買入 0050（若遇非交易日，順延至下一個交易日）</div>
+  <h2 class="section-title">0050 定期定額比較</h2>
+  <div class="section-sub">使用基金實際現金流日期與金額，以 0050 開盤價買入；非交易日只順延至下一交易日。</div>
   <div id="dcaStatus"></div>
   <div class="cmp-summary" id="dcaSummary">
-    <div class="cmp-card"><div class="cc-label">基金目前資產</div><div class="cc-value" id="dcaFundValue">--</div><div class="cc-sub">00631L 合資</div></div>
+    <div class="cmp-card"><div class="cc-label">最近一期歷史基金資產</div><div class="cc-value" id="dcaFundValue">--</div><div class="cc-sub">與 0050 使用同一現金流期間</div></div>
     <div class="cmp-card"><div class="cc-label">0050 模擬市值</div><div class="cc-value" id="dca0050Value">--</div><div class="cc-sub">定期定額 0050</div></div>
     <div class="cmp-card" id="dcaFundRoiCard"><div class="cc-label">基金報酬率</div><div class="cc-value" id="dcaFundRoi">--</div><div class="cc-sub">00631L 合資</div></div>
     <div class="cmp-card" id="dca0050RoiCard"><div class="cc-label">0050 報酬率</div><div class="cc-value" id="dca0050Roi">--</div><div class="cc-sub">定期定額 0050</div></div>
   </div>
   <div class="chart-box" style="margin-bottom:20px">
     <div class="chart-title">基金總資產 vs 0050 定期定額</div>
-    <canvas id="dcaChart"></canvas>
+    <canvas id="dcaChart" aria-describedby="dcaChartSummary"></canvas><p class="chart-summary" id="dcaChartSummary">折線圖：比較歷史基金資產與使用相同現金流回測的 0050 模擬價值。</p>
   </div>
   <div class="info-card">
     <div class="ic-label">說明</div>
@@ -250,10 +252,10 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #1a5
 <div id="overviewCards" style="display:none"></div></div></main>
 <div id="memberSection" style="display:none">
 <button class="back-btn" id="backToOverview">← 返回總覽</button>
-<div class="section-title" id="memberTitle"></div>
+<h2 class="section-title" id="memberTitle"></h2>
 <div class="info-grid" id="memberCards"></div>
-<div class="chart-row"><div class="chart-box"><div class="chart-title">個人資產價值 vs 累計申購金額</div><canvas id="memberNavChart"></canvas></div><div class="chart-box"><div class="chart-title">每月申購金額</div><canvas id="memberInvestmentChart"></canvas></div></div>
-<div class="section-title">歷史交易明細</div>
+<div class="chart-row"><div class="chart-box"><div class="chart-title">個人資產價值 vs 累計申購金額</div><canvas id="memberNavChart" aria-describedby="memberNavChartSummary"></canvas><p class="chart-summary" id="memberNavChartSummary">折線圖：顯示選定成員的資產價值與累計申購金額。</p></div><div class="chart-box"><div class="chart-title">每月申購金額</div><canvas id="memberInvestmentChart" aria-describedby="memberInvestmentChartSummary"></canvas><p class="chart-summary" id="memberInvestmentChartSummary">長條圖：顯示選定成員各筆申購金額。</p></div></div>
+<h2 class="section-title">歷史交易明細</h2>
 <div class="table-wrap"><table id="memberDetailTable"><thead><tr><th>日期</th><th>申購金額</th><th>成交淨值</th><th>購得單位數</th><th>累積單位</th></tr></thead><tbody id="memberDetailBody"></tbody></table></div></div></div>
 <script>
 
@@ -313,22 +315,24 @@ function CN(iv){let s=[],cu=0;for(let v of iv){cu+=v.u;s.push({d:v.d,dk:v.dk,v:c
 
 function RO(cv,msd,wn,data){
   const snap=data.snapshot, l=wn?.length?wn[wn.length-1]:null, it=snap.totalInvested, ct=snap.totalAssets, pt=ct-it, rt=it>0?(pt/it)*100:0;
-  const warning=document.getElementById('overviewFreshness'); warning.textContent=(data.cacheWarning?'快取資料／可能已過期 · ':'')+'截至 '+(snap.asOf||'未知日期');
-  let notice=document.getElementById('snapshotNotice'); if(!notice){notice=document.createElement('div');notice.id='snapshotNotice';notice.className='snapshot-warning';document.getElementById('heroStats').before(notice)}
+  const warning=document.getElementById('overviewFreshness'); warning.textContent=(data.cacheWarning?'快取資料／可能已過期 · ':'')+'核心快照 '+(snap.sources.core||'未知時間');
+  let notice=document.getElementById('snapshotNotice');
   const failed=Object.entries(snap.checks||{}).filter(([,ok])=>!ok).map(([k])=>k);
-  notice.textContent=failed.length?'⚠️ 資料來源尚未同步；核心快照與成員/持股驗證未通過。核心更新：'+(snap.sources.core||'未知')+'；歷史淨值：'+(snap.sources.history||'未知'):'資料來源已通過一致性驗證，截至 '+(snap.asOf||'未知日期');
+  notice.textContent=failed.length?'⚠️ 資料來源尚未同步；目前快照與歷史資料分開顯示。核心快照：NT$ '+FN(ct,0)+'（'+(snap.sources.core||'未知時間')+'）；最近一期歷史：NT$ '+FN(l?.a,0)+'（'+(snap.sources.history||'未知日期')+'）。ROI、曝險與達標預測標示為暫估。':'資料來源已通過一致性驗證；目前快照與歷史資料日期分開標示。';
+  document.querySelector('#heroROI').previousElementSibling.textContent=failed.length?'整體報酬率（暫估）':'整體報酬率';
+  document.querySelector('#ratioExposure').previousElementSibling.textContent=failed.length?'曝險比例（暫估）':'曝險比例';
+  document.querySelector('#goalCard .goal-label').textContent=failed.length?'目標（暫估）：NT$ 1億':'目標：NT$ 1億';
   document.getElementById('heroInvested').textContent='NT$ '+FN(it,0);
   document.getElementById('heroCurrent').textContent='NT$ '+FN(ct,0);
   document.getElementById('heroProfit').textContent='NT$ '+FN(pt,0);
   document.getElementById('heroROI').textContent=FR(rt);
   let pc=document.getElementById('heroProfitCard');pc.className='snap-card'+(pt>=0?' up':' down');
-  document.getElementById('overviewFreshness').textContent=l?'最新更新 '+l.d:'資料更新中';
-  document.getElementById('overviewHeroSubtitle').textContent=l?'累計申購 NT$ '+FN(it,0)+'，目前資產價值 NT$ '+FN(ct,0):'即時彙整 Google Sheets 資料';
+  document.getElementById('overviewHeroSubtitle').textContent='目前快照：NT$ '+FN(ct,0)+'；核心快照時間：'+(snap.sources.core||'未知');
   document.getElementById('infoInvested').textContent='NT$ '+FN(it,0);
   document.getElementById('infoCurrent').textContent='NT$ '+FN(ct,0);
   document.getElementById('infoStartDate').textContent=cv.sd||'--';
   document.getElementById('infoMemberCount').textContent=msd.length+' 人';
-  document.getElementById('infoUpdateDate').textContent=l?l.d:'--';
+  document.getElementById('infoUpdateDate').textContent='核心 '+(snap.sources.core||'--')+'；歷史 '+(l?.d||'--');
   let sc=snap.cash||0,se=snap.stockExposure||0,sa=snap.totalAssets||1;
   document.getElementById('ratioCash').textContent='NT$ '+FN(sc,0);
   document.getElementById('ratioStock').textContent='NT$ '+FN(se,0);
@@ -336,8 +340,8 @@ function RO(cv,msd,wn,data){
   document.getElementById('ratioExposure').textContent=(se/sa*100).toFixed(1)+'%';
   let ts=snap.members.reduce((s,m)=>s+m.invested,0),tv=snap.members.reduce((s,m)=>s+m.value,0);
   document.getElementById('ratioMemberBody').innerHTML=snap.members.map(m=>{let p=m.value-m.invested;return'<tr><td>'+EH(m.name)+'</td><td>NT$ '+FN(m.invested,0)+'</td><td>'+(ts>0?(m.invested/ts*100).toFixed(1):'0')+'%</td><td>NT$ '+FN(m.value,0)+'</td><td>'+(tv>0?(m.value/tv*100).toFixed(1):'0')+'%</td><td>'+FR(p/m.invested*100)+'</td></tr>'}).join('');
-  document.getElementById('navLatestValue').textContent=ct>0?'NT$ '+FN(ct,0):'--';
-  document.getElementById('navTotalInvested').textContent=it>0?'NT$ '+FN(it,0):'--';
+  document.getElementById('navLatestValue').textContent=l?.a>0?'NT$ '+FN(l.a,0):'--';
+  document.getElementById('navTotalInvested').textContent=l?.i>0?'NT$ '+FN(l.i,0):'--';
   document.getElementById('navDataCount').textContent=wn.length+' 筆';
   document.getElementById('navLatestDate').textContent=l?l.d:'--';
   if(wn.length){let sd=[...wn].sort((a,b)=>b.dk-a.dk);
@@ -395,7 +399,7 @@ function renderTargetTracker(ct, wn){
 
   const increments=(wn||[]).slice(1).map((r,i)=>r.i-(wn[i]?.i||0)).filter(v=>v>0), monthly=increments.length?increments.at(-1):0;
   const scenarios=Financial.goalScenarios(ct,monthly,GOAL);
-  document.getElementById('goalEta').innerHTML=scenarios.map(s=>s.months?`${s.label} ${(s.rate*100).toFixed(0)}%：${(s.months/12).toFixed(1)} 年`:`${s.label}：無法估算`).join('<br>')+'<br><small>假設每月投入 NT$ '+FN(monthly,0)+'；複利投入模型，非精確日期</small>';
+  document.getElementById('goalEta').innerHTML=scenarios.map(s=>s.tooLong?`${s.label} ${(s.rate*100).toFixed(0)}%：超過100年`:`${s.label} ${(s.rate*100).toFixed(0)}%：${(s.months/12).toFixed(1)} 年`).join('<br>')+'<br><small>假設每月投入 NT$ '+FN(monthly,0)+'；複利投入模型，非精確日期</small>';
   document.getElementById('goalEta').style.fontSize='0.75rem';
 }
 
@@ -565,33 +569,26 @@ async function renderDCAComparison(wn, presetPrices = null, cashflowRows = []){
 
   // 找最接近的 0050 價格
   function findClosestPrice(dateStr, priceMap){
-    if(priceMap[dateStr]) return priceMap[dateStr];
-    const d = new Date(dateStr.replace(/\//g, '-'));
-    for(let offset = 1; offset <= 7; offset++){
-      const fwd = new Date(d); fwd.setDate(fwd.getDate() + offset);
-      const fs = fwd.getFullYear() + '/' + String(fwd.getMonth()+1).padStart(2,'0') + '/' + String(fwd.getDate()).padStart(2,'0');
-      if(priceMap[fs]) return priceMap[fs];
-    }
-    return null;
+    const found=Financial.nextTradingDate(dateStr,priceMap); return found?.price||null;
   }
 
-  const all0050Dates = Object.keys(prices0050).sort((a, b) =>
-    new Date(a.replace(/\//g, '-')) - new Date(b.replace(/\//g, '-'))
-  );
-  const current0050Price = all0050Dates.length > 0 ? prices0050[all0050Dates[all0050Dates.length - 1]] : null;
+  const all0050Dates = Object.entries(prices0050).map(([date,price])=>({date:Financial.dateKey(date),price:Number(price)})).filter(x=>x.date&&x.price>0).sort((a,b)=>PD(a.date)-PD(b.date));
+  const current0050Price = all0050Dates.at(-1)?.price||null;
 
   let cumShares = 0;
   const investRecords = [];
   let totalInvested0050 = 0;
-  let pendingCash = 0;
-
-  const flows=(cashflowRows||[]).filter(r=>r.a>0).sort((a,b)=>PD(a.d)-PD(b.d));
+  const mergedFlows=new Map();
+  for(const row of (cashflowRows||[])){ const key=Financial.dateKey(row.d); if(key&&row.a>0) mergedFlows.set(key,(mergedFlows.get(key)||0)+row.a); }
+  const flows=[...mergedFlows].map(([d,a])=>({d,a})).sort((a,b)=>PD(a.d)-PD(b.d));
+  const missingDates=[];
   for(const flow of flows){
-    const ds=Financial.nextTradingDate(flow.d,prices0050), price=ds?prices0050[ds]:null;
+    const trade=Financial.nextTradingDate(flow.d,prices0050);
     totalInvested0050+=flow.a;
-    if(!price){ statusEl.innerHTML+='<div class="anl-error">⚠️ 0050 缺少 '+flow.d+' 及其後 7 日價格，未靜默忽略這筆投入。</div>'; continue; }
-    cumShares+=flow.a/price; investRecords.push({d:ds,amount:flow.a,price,shares:cumShares,value:cumShares*price});
+    if(!trade){ missingDates.push(flow.d); continue; }
+    cumShares+=flow.a/trade.price; investRecords.push({d:trade.date,amount:flow.a,price:trade.price,shares:cumShares,value:cumShares*trade.price});
   }
+  if(missingDates.length){ statusEl.innerHTML='<div class="anl-error">⚠️ 無法計算 0050：缺少 '+missingDates.join('、')+' 及其後 7 日的開盤價；未產生市值或 -100% 假報酬。</div>'; ['dcaFundValue','dca0050Value','dcaFundRoi','dca0050Roi'].forEach(id=>document.getElementById(id).textContent='--'); return; }
 
   // 以週為單位產出時間序列（與 wn 同步）
   const dcaValues = [];
@@ -693,7 +690,9 @@ async function renderDCAComparison(wn, presetPrices = null, cashflowRows = []){
 }// ========================
 //  Tab 切換 & 初始化
 // ========================
-document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',function(){document.querySelectorAll('.tab-btn').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));this.classList.add('active');this.setAttribute('aria-selected','true');document.getElementById(this.dataset.tab).classList.add('active')})});
+const tabs=[...document.querySelectorAll('.tab-btn')];
+function activateTab(tab, moveFocus=false){tabs.forEach(x=>{const active=x===tab;x.classList.toggle('active',active);x.setAttribute('aria-selected',String(active));x.tabIndex=active?0:-1;document.getElementById(x.dataset.tab).classList.toggle('active',active)});if(moveFocus)tab.focus();}
+tabs.forEach((b,i)=>{b.addEventListener('click',()=>activateTab(b));b.addEventListener('keydown',e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;activateTab(tabs[next],true);});});
 
 async function init(){
   try{
