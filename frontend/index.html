@@ -306,7 +306,7 @@ const SEL=document.getElementById('memberSelect'),BK=document.getElementById('ba
 
 function CN(iv){let s=[],cu=0;for(let v of iv){cu+=v.u;s.push({d:v.d,dk:v.dk,v:cu*v.n,cu:cu})}return s}
 
-function RO(cv,msd,wn){
+function RO(cv,msd,wn,data){
   let l=wn?.length?wn[wn.length-1]:null,it=l?l.i:cv.ta,ct=l?l.a:cv.ta,pt=ct-it,rt=it>0?(pt/it)*100:0;
   document.getElementById('heroInvested').textContent='NT$ '+FN(it,0);
   document.getElementById('heroCurrent').textContent='NT$ '+FN(ct,0);
@@ -750,7 +750,7 @@ async function init(){
     SEL.addEventListener('change',function(e){let i=parseInt(e.target.value);if(!isNaN(i))SM(i,md,msd);else BKFn()});
     document.addEventListener('click',function(e){let r=e.target.closest('.clickable-row');if(r){let i=parseInt(r.dataset.idx);if(!isNaN(i)){SEL.value=i;SM(i,md,msd)}}});
 
-    RO(cv,msd,wn);
+    RO(cv,msd,wn,data);
     LM.style.display='none';
   }catch(e){console.error(e);LM.innerHTML='<div style="color:#e74c3c;font-size:16px;font-weight:600">⚠️ 資料讀取失敗</div><div style="color:#8a9bb5;font-size:13px;margin-top:4px">'+EH(e.message)+'</div><br><button onclick="location.reload()" style="padding:8px 24px;background:#1a56db;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px">重新載入</button>';}
 }
