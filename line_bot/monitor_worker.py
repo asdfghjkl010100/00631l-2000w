@@ -1,27 +1,11 @@
-"""
-獨立監控 Worker — 在伺服器背景執行定期檢查
-使用方式：python -m linebot.monitor_worker
-"""
-import time
+"""外部 Cron 使用的單次監控入口。"""
 import sys
-from .config import Config
-from .sheets_monitor import (
-    compute_cache_fingerprint,
-    load_cache,
-    save_cache,
-    fetch_all_data,
-    build_update_message,
-)
-from .app import push_message, check_for_updates
+from .app import check_for_updates
 
 
 def run():
-    print('[Worker] 監控 Worker 啟動', file=sys.stderr)
-    # 先執行一次
+    print('[Worker] 執行單次監控', file=sys.stderr)
     check_for_updates()
-    while True:
-        time.sleep(Config.MONITOR_INTERVAL_SECONDS)
-        check_for_updates()
 
 
 if __name__ == '__main__':

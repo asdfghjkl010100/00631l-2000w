@@ -30,8 +30,8 @@ Google Sheets 資料有更新時，會自動透過 LINE Bot 推播通知到群�
 ### 功能
 
 - 📊 **即時查詢** — 在 LINE 輸入「查詢」取得基金總覽
-- 👤 **團員明細** — 輸入「查 團員名稱」查詢個別團員
-- 🔔 **自動推播** — 資料變更時自動發送更新通知
+- 👤 **團員明細** — 前端可從「團員明細」選單查看
+- 🔔 **每週推播** — 外部 Cron 於每週日 20:00（Asia/Taipei）執行，且同週不重複通知
 
 ### 部署方式
 
@@ -45,16 +45,24 @@ Google Sheets 資料有更新時，會自動透過 LINE Bot 推播通知到群�
 
 - **Flask** — Webhook 伺服器
 - **LINE Messaging API SDK** — LINE Bot 整合
-- **APScheduler** — 定期檢查 Google Sheets 變更
+- **Render Cron Job** — 每週日 20:00（Asia/Taipei）執行單次檢查
 - **Google Sheets CSV** — 資料來源（與前端共用）
 
 | 檔案 | 說明 |
 |------|------|
-| linebot/app.py | Flask Webhook 主程式 |
-| linebot/sheets_monitor.py | Google Sheets 擷取與變更偵測 |
-| linebot/messages.py | LINE 訊息模板 |
-| linebot/config.py | 設定檔 |
-| linebot/monitor_worker.py | 獨立監控 Worker |
+| line_bot/app.py | Flask Webhook 主程式 |
+| line_bot/sheets_monitor.py | Google Sheets 擷取與變更偵測 |
+| line_bot/messages.py | LINE 訊息模板 |
+| line_bot/config.py | 設定檔 |
+| line_bot/monitor_worker.py | Cron 單次監控入口 |
 | .env.example | 環境變數範本 |
 | Procfile | 平台部署設定 |
+
+### 本機驗證
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+監控 Cron 需要 `SCHEDULE_TOKEN`；Render Cron 直接執行 `python -m line_bot.monitor_worker`，不依賴 Web 服務常駐。
 | equirements.txt | Python 相依套件 |

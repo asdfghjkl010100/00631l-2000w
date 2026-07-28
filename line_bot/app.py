@@ -2,6 +2,7 @@
 import sys
 import os
 import json
+import logging
 from datetime import datetime, timedelta, timezone
 from flask import Flask, request, abort
 from linebot.v3 import WebhookHandler
@@ -10,10 +11,11 @@ from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 from .config import Config
-from .sheets_monitor import fetch_all_data, compute_cache_fingerprint, load_cache, save_cache, build_update_message, fetch_weekly_comparison
+from .sheets_monitor import fetch_all_data, compute_cache_fingerprint, load_cache, save_cache, build_update_message, fetch_weekly_comparison, fetch_last_history_date
 from .messages import build_status_message
 
 app = Flask(__name__)
+logger = logging.getLogger(__name__)
 
 configuration = Configuration(access_token=Config.LINE_CHANNEL_ACCESS_TOKEN)
 api_client = ApiClient(configuration)
@@ -31,6 +33,7 @@ def push_message(text: str):
 #  上周快照管理
 # ===================
 WEEKLY_FILE = "weekly_snapshot.json"
+WEEKLY_SENT_FILE = "weekly_sent.json"
 
 
 def load_weekly_snapshot() -> dict | None:
@@ -48,6 +51,14 @@ def save_weekly_snapshot(cv: dict):
     with open(WEEKLY_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
     print("[Weekly] 已儲存本周快照", file=sys.stderr)
+
+
+def _weekly_sent_key():
+    date = fetch_last_history_date()
+    if date:
+        return date.strftime('%Y-%m-%d')
+    today = datetime.now(timezone(timedelta(hours=8)))
+    return f"{today.strftime('%Y')}-W{today.isocalendar().week:02d}"
 
 
 def maybe_rotate_weekly(cv: dict):
@@ -77,7 +88,8 @@ def callback():
     except InvalidSignatureError:
         abort(400)
     except Exception:
-        pass
+        logger.exception("LINE webhook 處理失敗")
+        abort(500)
     return "OK"
 
 
@@ -88,6 +100,16 @@ def health():
     import time
     since = f"{time.time() - LAST_CHECK:.0f}秒前" if LAST_CHECK else "尚未執行"
     return {"status": "ok", "checks": CHECK_COUNT, "last": since, "sheets": DEBUG_SHEETS}
+
+
+@app.route("/scheduled-check", methods=["POST"])
+def scheduled_check():
+    """由外部 Cron 觸發單次檢查；不讓 Web worker 自己維持排程。"""
+    token = request.headers.get("X-Schedule-Token", "")
+    if not Config.SCHEDULE_TOKEN or token != Config.SCHEDULE_TOKEN:
+        abort(401)
+    check_for_updates()
+    return {"status": "ok", "checks": CHECK_COUNT}
 
 
 @handler.add(MessageEvent, message=TextMessageContent)
@@ -109,8 +131,9 @@ def handle_text_message(event):
 #  定期監控
 # ===================
 def check_for_updates():
-    global CHECK_COUNT, DEBUG_SHEETS
+    global CHECK_COUNT, DEBUG_SHEETS, LAST_CHECK
     CHECK_COUNT += 1
+    LAST_CHECK = __import__('time').time()
     try:
         new_fp = compute_cache_fingerprint()
     except Exception as e:
@@ -125,8 +148,21 @@ def check_for_updates():
             new_data = fetch_all_data()
             msg = build_update_message(cache.get("data", {}), new_data)
             if msg:
-                push_message(msg)
-                print("[Monitor] 已推播更新通知", file=sys.stderr)
+                key = _weekly_sent_key()
+                sent = {}
+                if os.path.exists(WEEKLY_SENT_FILE):
+                    try:
+                        with open(WEEKLY_SENT_FILE, encoding='utf-8') as f:
+                            sent = json.load(f)
+                    except (OSError, json.JSONDecodeError):
+                        pass
+                if key and sent.get('key') == key:
+                    print("[Monitor] 本週已推播，略過重複通知", file=sys.stderr)
+                else:
+                    push_message(msg)
+                    with open(WEEKLY_SENT_FILE, 'w', encoding='utf-8') as f:
+                        json.dump({'key': key}, f)
+                    print("[Monitor] 已推播更新通知", file=sys.stderr)
         except Exception as e:
             print(f"[Monitor] 推播失敗：{e}", file=sys.stderr)
     try:
@@ -140,39 +176,6 @@ def check_for_updates():
 
 LAST_CHECK = None
 DEBUG_SHEETS = "未測試"
-
-def _run_loop():
-    import time
-    global LAST_CHECK
-    from datetime import datetime, timezone, timedelta
-    TZ = timezone(timedelta(hours=8))
-    print("[Monitor] 排程器啟動，每週日 20:00 檢查一次", file=sys.stderr)
-    # 啟動時先做一次初始快取（建立 baseline）
-    try:
-        check_for_updates()
-    except Exception as ex:
-        print(f"[Monitor] 初始執行錯誤：{ex}", file=sys.stderr)
-    LAST_CHECK = time.time()
-    # 每週日 20:00-20:05 之間執行
-    while True:
-        now = datetime.now(TZ)
-        if now.weekday() == 6 and now.hour == 20 and 0 <= now.minute <= 5:
-            try:
-                check_for_updates()
-            except Exception as ex:
-                print(f"[Monitor] 執行錯誤：{ex}", file=sys.stderr)
-            LAST_CHECK = time.time()
-            time.sleep(360)  # 睡 6 分鐘避開重複觸發
-        else:
-            time.sleep(30)
-
-def start_scheduler():
-    import threading
-    t = threading.Thread(target=_run_loop, daemon=True)
-    t.start()
-
-
-start_scheduler()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

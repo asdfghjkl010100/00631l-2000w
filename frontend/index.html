@@ -387,6 +387,7 @@ function renderTargetTracker(ct, wn){
   document.getElementById('goalProgressLabel').textContent = pct.toFixed(2) + '%';
 
   // 預估達成時間（基於歷史月成長率）
+  let monthlyReturn = null;
   if(wn && wn.length >= 3){
     const first = wn[0];
     const last = wn[wn.length - 1];
@@ -395,7 +396,8 @@ function renderTargetTracker(ct, wn){
     const months = (lParts[0] - fParts[0]) * 12 + (lParts[1] - fParts[1]) + (lParts[2] - fParts[2]) / 30;
     if(months > 0 && first.a > 0){
       const totalReturn = last.a / first.a;
-      const monthlyReturn = Math.pow(totalReturn, 1 / months);
+      monthlyReturn = Number.isFinite(totalReturn) && totalReturn > 0
+        ? Math.pow(totalReturn, 1 / months) : null;
       if(monthlyReturn > 1 && ct < GOAL){
         const n = Math.log(GOAL / ct) / Math.log(monthlyReturn);
         const years = n / 12;
@@ -410,7 +412,9 @@ function renderTargetTracker(ct, wn){
       }
     }
   }
-  document.getElementById('goalEta').textContent = monthlyReturn > 1 ? '資料不足無法估算' : '目前虧損，暫時無法估算';
+  document.getElementById('goalEta').textContent = monthlyReturn === null
+    ? '資料不足無法估算'
+    : monthlyReturn > 1 ? '資料不足無法估算' : '目前虧損，暫時無法估算';
   document.getElementById('goalEta').style.fontSize = '0.75rem';
 }
 
@@ -505,7 +509,7 @@ function renderRiskMetrics(wn){
 // ========================
 //  0050 定期定額比較
 // ========================
-async function fetch0050Prices() {
+async function fetch0050Prices(wn = []) {
   // 優先使用設定的 CSV
   if(CSV.d0050){
     try {
@@ -533,8 +537,13 @@ async function fetch0050Prices() {
     'https://query2.finance.yahoo.com',
     'https://corsproxy.io/?'
   ];
-  const startTs = Math.floor(new Date('2025-11-01').getTime() / 1000);
-  const endTs = Math.floor(new Date('2026-12-01').getTime() / 1000);
+  const firstDate = wn.find(row => row && /^\d{4}\/\d{1,2}\/\d{1,2}$/.test(row.d))?.d;
+  const startDate = firstDate
+    ? new Date(firstDate.replace(/\//g, '-') + 'T00:00:00+08:00')
+    : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+  const endDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const startTs = Math.floor(startDate.getTime() / 1000);
+  const endTs = Math.floor(endDate.getTime() / 1000);
   const yahooPath = '/v8/finance/chart/0050.TW?period1=' + startTs + '&period2=' + endTs + '&interval=1wk&includeAdjustedClose=true';
 
   for(const baseUrl of yahooUrls){
@@ -578,7 +587,7 @@ async function renderDCAComparison(wn){
 
   statusEl.innerHTML = '<div class="anl-note">⏳ 正在取得 0050 歷史股價...</div>';
 
-  const prices0050 = await fetch0050Prices();
+  const prices0050 = await fetch0050Prices(wn);
   if(!prices0050 || Object.keys(prices0050).length === 0){
     statusEl.innerHTML = '<div class="anl-error">⚠️ 暫無法取得 0050 歷史股價，0050 比較區塊將不顯示。您可在 Google Sheets 新增「0050 股價」分頁並設定 CSV.d0050。</div>';
     document.getElementById('dcaFundValue').textContent = '--';
@@ -605,7 +614,9 @@ async function renderDCAComparison(wn){
     return null;
   }
 
-  const all0050Dates = Object.keys(prices0050).sort();
+  const all0050Dates = Object.keys(prices0050).sort((a, b) =>
+    new Date(a.replace(/\//g, '-')) - new Date(b.replace(/\//g, '-'))
+  );
   const current0050Price = all0050Dates.length > 0 ? prices0050[all0050Dates[all0050Dates.length - 1]] : null;
 
   // 每期投入金額對應到該月1號一次買入 0050
@@ -648,8 +659,7 @@ async function renderDCAComparison(wn){
     }
   }
 
-  const lastRecord = investRecords.length > 0 ? investRecords[investRecords.length - 1] : null;
-  const dcaValue = lastRecord ? lastRecord.value : 0;
+  const dcaValue = cumShares > 0 && current0050Price > 0 ? cumShares * current0050Price : 0;
   const fundValue = wn[wn.length - 1].a;
   const fundRoi = totalInvested0050 > 0 ? ((fundValue - totalInvested0050) / totalInvested0050 * 100) : 0;
   const dcaRoi = totalInvested0050 > 0 ? ((dcaValue - totalInvested0050) / totalInvested0050 * 100) : 0;

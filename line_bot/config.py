@@ -41,6 +41,7 @@ class Config:
 
     # 監控間隔（秒）
     MONITOR_INTERVAL_SECONDS = int(os.getenv('MONITOR_INTERVAL', '300'))
+    SCHEDULE_TOKEN = os.getenv('SCHEDULE_TOKEN', '')
 
     # 快取檔（記錄上次的資料指紋，用來偵測變更）
     CACHE_FILE = os.getenv('CACHE_FILE', 'data_cache.json')

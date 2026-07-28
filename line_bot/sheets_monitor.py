@@ -3,9 +3,11 @@ Google Sheets 資料擷取與變更偵測
 """
 import json
 import hashlib
+import math
 import csv
 import io
 import os
+import time
 import requests
 from datetime import datetime, timezone, timedelta
 
@@ -16,9 +18,24 @@ from .config import Config
 
 def _fetch_csv(url: str) -> str:
     """抓取 CSV 原始文字"""
-    resp = requests.get(url, timeout=30, headers={'Cache-Control': 'no-cache'})
-    resp.encoding = 'utf-8'
-    return resp.text
+    last_error = None
+    for attempt in range(3):
+        try:
+            resp = requests.get(url, timeout=30, headers={'Cache-Control': 'no-cache'})
+            resp.raise_for_status()
+            content_type = resp.headers.get('Content-Type', '').lower()
+            if content_type and not any(t in content_type for t in ('csv', 'text/plain', 'text/html')):
+                raise ValueError(f'不支援的 Content-Type：{content_type}')
+            text = resp.text
+            if not text.strip() or '<html' in text[:500].lower():
+                raise ValueError('回應不是有效 CSV')
+            resp.encoding = 'utf-8'
+            return text
+        except (requests.RequestException, ValueError) as exc:
+            last_error = exc
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+    raise RuntimeError(f'CSV 下載失敗：{last_error}')
 
 
 def _parse_csv(text: str) -> list:
@@ -37,6 +54,7 @@ def fetch_core_data() -> dict:
     text = _fetch_csv(Config.CSV_CORE)
     rows = _parse_csv(text)
     cv = {'ta': 0, 'ca': 0, 'sv': 0, 'sp': 0, 'sh': 0}
+    found = set()
     for r in rows:
         if len(r) < 2:
             continue
@@ -44,14 +62,21 @@ def fetch_core_data() -> dict:
         val = _safe_float(r[1])
         if key == '合資總資產':
             cv['ta'] = val
+            found.add(key)
         elif key == '帳上現金':
             cv['ca'] = val
+            found.add(key)
         elif key == '00631L 現價':
             cv['sp'] = val
             cv['sv'] = val * cv['sh']
+            found.add(key)
         elif key == '合資總持股數':
             cv['sh'] = val
             cv['sv'] = cv['sp'] * val
+            found.add(key)
+    required = {'合資總資產', '帳上現金', '00631L 現價', '合資總持股數'}
+    if not required.issubset(found):
+        raise ValueError('核心 CSV 缺少必要欄位')
     return cv
 
 
@@ -131,18 +156,22 @@ def fetch_weekly_comparison():
     try:
         text = _fetch_csv(Config.CSV_WN)
         rows = _parse_csv(text)
-        # 找最後兩筆有日期+資產的 row
+        # 清理、排序後取目前紀錄之前最近一筆
         records = []
-        for r in rows:
+        for index, r in enumerate(rows):
             if len(r) >= 3:
                 try:
-                    float(r[1])
-                    records.append((r[0].strip(), float(r[1]), float(r[2]), float(r[3]) if len(r) > 3 else 0))
+                    date = datetime.strptime(r[0].strip(), '%Y/%m/%d')
+                    asset = float(r[1])
+                    if not math.isfinite(asset):
+                        continue
+                    records.append((date, index, asset, float(r[3]) if len(r) > 3 else 0))
                 except (ValueError, IndexError):
                     continue
         if len(records) >= 2:
-            w1, w2 = records[-2], records[-1]
-            return {"ta": w2[1], "sp": w2[3]}
+            records.sort(key=lambda item: (item[0], item[1]))
+            previous, current = records[-2], records[-1]
+            return {"ta": previous[2], "sp": previous[3], "date": previous[0].strftime('%Y/%m/%d')}
     except Exception as e:
         print(f"[Weekly] 無法讀取歷史資料：{e}", file=__import__("sys").stderr)
     return None
