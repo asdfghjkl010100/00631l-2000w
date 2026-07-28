@@ -664,19 +664,23 @@ async function renderDCAComparison(wn, presetPrices = null){
   for(let i = 0; i < wn.length; i++){
     const wkDate = new Date(wn[i].d.replace(/\//g, '-'));
     let latestRecord = null;
+    let purchasedAmount = 0;
     for(const rec of investRecords){
       const recDate = new Date(rec.d.replace(/\//g, '-'));
       if(recDate <= wkDate){
         latestRecord = rec;
+        purchasedAmount += rec.amount;
       } else {
         break;
       }
     }
     if(latestRecord){
       const latestPrice = findClosestPrice(wn[i].d, prices0050) || current0050Price || 0;
-      dcaValues.push(latestPrice > 0 ? latestRecord.shares * latestPrice : latestRecord.shares * (current0050Price || 0));
+      const cash = Math.max(0, wn[i].i - purchasedAmount);
+      dcaValues.push((latestPrice > 0 ? latestRecord.shares * latestPrice : latestRecord.shares * (current0050Price || 0)) + cash);
     } else {
-      dcaValues.push(i === 0 ? wn[i].i : 0);
+      // 尚未到第一次買入日，累計投入金額仍以現金保留。
+      dcaValues.push(wn[i].i);
     }
   }
   renderRiskMetrics(wn, dcaValues);
