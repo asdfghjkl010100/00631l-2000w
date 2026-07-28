@@ -621,22 +621,31 @@ async function renderDCAComparison(wn, presetPrices = null){
   );
   const current0050Price = all0050Dates.length > 0 ? prices0050[all0050Dates[all0050Dates.length - 1]] : null;
 
-  // 每期投入金額對應到該月1號一次買入 0050
+  // 歷史起點先視為現金本金，從下一個月1號開始用開盤價買入。
   let cumShares = 0;
   const investRecords = [];
   let totalInvested0050 = 0;
+  let pendingCash = 0;
 
   for(let i = 0; i < wn.length; i++){
     const periodInvest = i === 0 ? wn[i].i : wn[i].i - wn[i-1].i;
     if(periodInvest <= 0) continue;
 
     const baseDate = new Date(wn[i].d.replace(/\//g, '-'));
-    const ds = baseDate.getFullYear() + '/' + String(baseDate.getMonth()+1).padStart(2,'0') + '/01';
+    pendingCash += periodInvest;
+    totalInvested0050 += periodInvest;
+    let purchaseDate = baseDate;
+    if(i === 0){
+      purchaseDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1);
+    } else {
+      purchaseDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+    }
+    const ds = purchaseDate.getFullYear() + '/' + String(purchaseDate.getMonth()+1).padStart(2,'0') + '/01';
     const price = findClosestPrice(ds, prices0050) || current0050Price;
     if(price && price > 0){
-      cumShares += periodInvest / price;
-      totalInvested0050 += periodInvest;
-      investRecords.push({ d: ds, amount: periodInvest, price: price, shares: cumShares, value: cumShares * price });
+      cumShares += pendingCash / price;
+      investRecords.push({ d: ds, amount: pendingCash, price: price, shares: cumShares, value: cumShares * price });
+      pendingCash = 0;
     }
   }
 
@@ -657,7 +666,7 @@ async function renderDCAComparison(wn, presetPrices = null){
       const latestPrice = findClosestPrice(wn[i].d, prices0050) || current0050Price || 0;
       dcaValues.push(latestPrice > 0 ? latestRecord.shares * latestPrice : latestRecord.shares * (current0050Price || 0));
     } else {
-      dcaValues.push(0);
+      dcaValues.push(i === 0 ? wn[i].i : 0);
     }
   }
 
