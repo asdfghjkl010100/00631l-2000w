@@ -3,6 +3,7 @@
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>台股國運基金</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="financial.js"></script>
 <script>typeof Chart>"u"&&document.write("<script src=\\\"https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js\\\"><\\/script>")</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -15,7 +16,7 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
 .nav-links a:hover{background:#f0f4ff;color:#1a56db}
 .nav-links select{color:#5a6a7e;font-size:0.9rem;font-weight:500;background:#fff;border:1px solid #d0d7e2;padding:8px 16px;border-radius:6px;cursor:pointer;outline:none}
 .backend-badge{display:inline-block;font-size:0.75rem;background:#eef2f7;color:#7a8aa0;padding:4px 10px;border-radius:999px;margin-left:8px}
-.container{max-width:1300px;margin:0 auto;padding:20px}
+.container{max-width:1300px;margin:0 auto;padding:20px;min-width:0}
 .fund-header{background:#fff;border:1px solid #e8ecf1;border-radius:12px;padding:22px 28px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
 .fund-header-left{flex:1;min-width:200px}
 .fund-code{font-size:1.6rem;font-weight:800;color:#1a56db}
@@ -118,30 +119,35 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
 
 .anl-note{background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;font-size:0.82rem;color:#8a6d00;margin-bottom:16px;line-height:1.6}
 .anl-error{background:#fdecea;border:1px solid #f5c6cb;border-radius:8px;padding:12px 16px;font-size:0.82rem;color:#a94442;margin-bottom:16px;line-height:1.6}
+.snapshot-warning{background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:10px 14px;color:#735c00;margin-bottom:16px;font-size:.85rem;line-height:1.6}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #1a56db;outline-offset:2px}
+@media(max-width:480px){.container{padding:12px}.navbar{padding:0 12px}.nav-inner{height:auto;min-height:56px;gap:8px}.nav-links{overflow-x:auto;max-width:70vw}.tabs{overflow-x:auto}.tab-btn{flex:0 0 105px}.chart-row{grid-template-columns:minmax(0,1fr)}.chart-box{min-width:0;padding:12px}.chart-box canvas{max-width:100%}.snapshot-grid,.risk-grid,.cmp-summary{gap:8px}.snap-card,.risk-card,.cmp-card{padding:12px 8px}.sc-value{font-size:1.1rem!important}}
 </style>
 </head>
 <body>
-<nav class="navbar"><div class="nav-inner">
+<header class="navbar"><div class="nav-inner">
 <div class="logo">台股國運基金 </div>
 <div class="nav-links">
 <a href="#" id="navOverview">總覽</a>
-<select id="memberSelect"><option value="">團員明細</option></select>
-</div></div></nav>
+<label class="sr-only" for="memberSelect">選擇團員明細</label><select id="memberSelect"><option value="">團員明細</option></select>
+</div></div></header>
 <div class="container" id="app">
-<div id="loadingMsg" class="loading"><div class="spinner"></div><div>正在從 Google Sheets 讀取最新資料...</div></div>
+<div id="loadingMsg" class="loading" role="status" aria-live="polite"><div class="spinner"></div><div>正在讀取最新資料...</div></div>
+<main>
 <div id="overviewSection">
 <div class="fund-header">
 <div class="fund-header-left"><div class="fund-code">台股國運基金 <small>00631L</small></div><div class="fund-name">目標總資產一億元</div></div>
 <div class="fund-header-right"><div class="fund-badge" id="overviewFreshness">資料更新中</div><div class="fund-update" id="overviewHeroSubtitle">即時彙整 Google Sheets 資料</div></div>
 </div>
-<div class="tabs">
-<button class="tab-btn active" data-tab="tabInfo">基本資訊</button>
-<button class="tab-btn" data-tab="tabRatio">持股比重</button>
-<button class="tab-btn" data-tab="tabCompare">績效分析</button>
-<button class="tab-btn" data-tab="tabNAV">歷史淨值</button>
-<button class="tab-btn" data-tab="tabAnalysis">指數比較</button>
+<div class="tabs" role="tablist" aria-label="基金資訊分頁">
+<button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tabInfo" data-tab="tabInfo">基本資訊</button>
+<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabRatio" data-tab="tabRatio">持股比重</button>
+<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabCompare" data-tab="tabCompare">資產與淨值</button>
+<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabNAV" data-tab="tabNAV">歷史淨值</button>
+<button class="tab-btn" role="tab" aria-selected="false" aria-controls="tabAnalysis" data-tab="tabAnalysis">績效與比較</button>
 </div>
-<div class="tab-content active" id="tabInfo">
+<div class="tab-content active" role="tabpanel" id="tabInfo">
 <div class="snapshot-grid" id="heroStats">
 <div class="snap-card"><div class="sc-label">累計申購金額</div><div class="sc-value" id="heroInvested">--</div><div class="sc-delta">來自 Google Sheets</div></div>
 <div class="snap-card gold"><div class="sc-label">目前資產價值</div><div class="sc-value" id="heroCurrent">--</div><div class="sc-delta">當前市值 / 淨值換算</div></div>
@@ -209,7 +215,7 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
   <div class="risk-grid" id="riskGrid">
     <div class="risk-card" id="riskMdd"><div class="rc-label">最大回撤 (MDD)</div><div class="rc-value">--</div><div class="rc-sub">歷史最高點回落幅度</div></div>
     <div class="risk-card" id="riskVol"><div class="rc-label">年化波動率</div><div class="rc-value">--</div><div class="rc-sub">標準差 × √52</div></div>
-    <div class="risk-card" id="riskSharpe"><div class="rc-label">夏普比率</div><div class="rc-value">--</div><div class="rc-sub">(年化報酬 − 無風險利率) / 波動率</div></div>
+    <div class="risk-card" id="riskSharpe"><div class="rc-label">夏普比率</div><div class="rc-value">--</div><div class="rc-sub">無風險利率假設 1.5%</div></div>
     <div class="risk-card" id="riskReturn"><div class="rc-label">年化報酬率</div><div class="rc-value">--</div><div class="rc-sub">成立至今</div></div>
   </div>
   <div class="chart-box" style="margin-bottom:20px">
@@ -241,7 +247,7 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
   </div>
 </div>
 
-<div id="overviewCards" style="display:none"></div></div>
+<div id="overviewCards" style="display:none"></div></div></main>
 <div id="memberSection" style="display:none">
 <button class="back-btn" id="backToOverview">← 返回總覽</button>
 <div class="section-title" id="memberTitle"></div>
@@ -279,7 +285,7 @@ function PC(t){return t.trim().split('\n').map(r=>{let c=[],s='',q=!1;for(let ch
 function EH(s){let d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function PD(s){if(!s)return 0;let p=String(s).trim().split('/').map(Number);return p[0]*10000+p[1]*100+p[2]}
 function SF(v){let n=parseFloat(String(v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n}
-function FN(n,d){if(n==null||isNaN(n))return'--';if(Math.abs(n)>=1e8)return(n/1e8).toFixed(d)+'億';if(Math.abs(n)>=1000000)return(n/10000).toFixed(d)+'萬';return n.toFixed(d)}
+function FN(n,d){if(n==null||isNaN(n))return'--';return Number(n).toLocaleString('zh-TW',{minimumFractionDigits:d,maximumFractionDigits:d})}
 function FR(n){if(n==null||isNaN(n))return'--';return(n>=0?'+':'')+n.toFixed(2)+'%'}
 
 // ========================
@@ -288,13 +294,12 @@ function FR(n){if(n==null||isNaN(n))return'--';return(n>=0?'+':'')+n.toFixed(2)+
 async function FC(u){let s=new AbortController();let t=setTimeout(()=>s.abort(),15000);try{let r=await fetch(u,{cache:'no-store',signal:s.signal});clearTimeout(t);return await r.text()}catch(e){clearTimeout(t);throw e}}
 
 async function loadAllData(){
-    LM.innerHTML='<div class="spinner"></div><div>讀取中...</div>';
+    LM.innerHTML='<div class="spinner"></div><div>讀取中（最長 15 秒）...</div>';
     const api='https://zero0631l-2000w.onrender.com/api/dashboard';
-    const r=await fetch(api,{cache:'no-store'});
-    if(!r.ok)throw new Error('後端 API 回應 '+r.status);
-    const data=await r.json();
-    if(data.status!=='ok')throw new Error('後端資料狀態異常');
-    return data;
+    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),15000);
+    try { const r=await fetch(api,{cache:'no-store',signal:controller.signal}); if(!r.ok) throw new Error('後端 API 回應 '+r.status); const data=await r.json(); if(data.status!=='ok'||!data.snapshot) throw new Error('資料格式錯誤：缺少資產快照'); localStorage.setItem('dashboard-cache',JSON.stringify({savedAt:new Date().toISOString(),data})); return data; }
+    catch(e){ const cached=localStorage.getItem('dashboard-cache'); if(cached){const saved=JSON.parse(cached); saved.data.cacheWarning='快取資料，可能已過期（成功更新：'+saved.savedAt+'）'; return saved.data;} throw new Error(e.name==='AbortError'?'後端逾時（15 秒），請稍後重試':e.message||'後端錯誤'); }
+    finally { clearTimeout(timer); }
 }
 
 // ========================
@@ -307,7 +312,11 @@ const SEL=document.getElementById('memberSelect'),BK=document.getElementById('ba
 function CN(iv){let s=[],cu=0;for(let v of iv){cu+=v.u;s.push({d:v.d,dk:v.dk,v:cu*v.n,cu:cu})}return s}
 
 function RO(cv,msd,wn,data){
-  let l=wn?.length?wn[wn.length-1]:null,it=l?l.i:cv.ta,ct=l?l.a:cv.ta,pt=ct-it,rt=it>0?(pt/it)*100:0;
+  const snap=data.snapshot, l=wn?.length?wn[wn.length-1]:null, it=snap.totalInvested, ct=snap.totalAssets, pt=ct-it, rt=it>0?(pt/it)*100:0;
+  const warning=document.getElementById('overviewFreshness'); warning.textContent=(data.cacheWarning?'快取資料／可能已過期 · ':'')+'截至 '+(snap.asOf||'未知日期');
+  let notice=document.getElementById('snapshotNotice'); if(!notice){notice=document.createElement('div');notice.id='snapshotNotice';notice.className='snapshot-warning';document.getElementById('heroStats').before(notice)}
+  const failed=Object.entries(snap.checks||{}).filter(([,ok])=>!ok).map(([k])=>k);
+  notice.textContent=failed.length?'⚠️ 資料來源尚未同步；核心快照與成員/持股驗證未通過。核心更新：'+(snap.sources.core||'未知')+'；歷史淨值：'+(snap.sources.history||'未知'):'資料來源已通過一致性驗證，截至 '+(snap.asOf||'未知日期');
   document.getElementById('heroInvested').textContent='NT$ '+FN(it,0);
   document.getElementById('heroCurrent').textContent='NT$ '+FN(ct,0);
   document.getElementById('heroProfit').textContent='NT$ '+FN(pt,0);
@@ -320,13 +329,13 @@ function RO(cv,msd,wn,data){
   document.getElementById('infoStartDate').textContent=cv.sd||'--';
   document.getElementById('infoMemberCount').textContent=msd.length+' 人';
   document.getElementById('infoUpdateDate').textContent=l?l.d:'--';
-  let sc=cv.ca||0,se=cv.sv||0,sa=sc+se||1;
+  let sc=snap.cash||0,se=snap.stockExposure||0,sa=snap.totalAssets||1;
   document.getElementById('ratioCash').textContent='NT$ '+FN(sc,0);
   document.getElementById('ratioStock').textContent='NT$ '+FN(se,0);
   document.getElementById('ratioTotal').textContent='NT$ '+FN(sa,0);
   document.getElementById('ratioExposure').textContent=(se/sa*100).toFixed(1)+'%';
-  let ts=msd.reduce((s,m)=>s+m.i,0),tv=msd.reduce((s,m)=>s+m.v,0);
-  document.getElementById('ratioMemberBody').innerHTML=msd.map(m=>{let p=m.v-m.i;return'<tr><td>'+EH(m.n)+'</td><td>NT$ '+FN(m.i,0)+'</td><td>'+(ts>0?(m.i/ts*100).toFixed(1):'0')+'%</td><td>NT$ '+FN(m.v,0)+'</td><td>'+(tv>0?(m.v/tv*100).toFixed(1):'0')+'%</td><td style="color:'+(p>=0?'#27ae60':'#e74c3c')+'">'+FR(p/m.i*100)+'</td></tr>'}).join('');
+  let ts=snap.members.reduce((s,m)=>s+m.invested,0),tv=snap.members.reduce((s,m)=>s+m.value,0);
+  document.getElementById('ratioMemberBody').innerHTML=snap.members.map(m=>{let p=m.value-m.invested;return'<tr><td>'+EH(m.name)+'</td><td>NT$ '+FN(m.invested,0)+'</td><td>'+(ts>0?(m.invested/ts*100).toFixed(1):'0')+'%</td><td>NT$ '+FN(m.value,0)+'</td><td>'+(tv>0?(m.value/tv*100).toFixed(1):'0')+'%</td><td>'+FR(p/m.invested*100)+'</td></tr>'}).join('');
   document.getElementById('navLatestValue').textContent=ct>0?'NT$ '+FN(ct,0):'--';
   document.getElementById('navTotalInvested').textContent=it>0?'NT$ '+FN(it,0):'--';
   document.getElementById('navDataCount').textContent=wn.length+' 筆';
@@ -339,7 +348,7 @@ function RO(cv,msd,wn,data){
   // === 績效分析 ===
   renderTargetTracker(ct, wn);
   renderRiskMetrics(wn);
-  renderDCAComparison(wn, data.p0050);
+  renderDCAComparison(wn, data.p0050, data.md.flat());
 }
 
 function DP(ca,st){let ctx=document.getElementById('pieChart').getContext('2d');if(pci)pci.destroy();pci=new Chart(ctx,{type:'doughnut',data:{labels:['現金','股票曝險 (00631L)'],datasets:[{data:[ca,st],backgroundColor:['#4a90d9','#c8963e'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#5a6a7e',font:{size:12}}},tooltip:{callbacks:{label:function(ctx){let l=ctx.label||'',v=ctx.parsed||0;return l+': NT$ '+FN(v,0)}}}}}})}
@@ -348,9 +357,9 @@ function DO(w){let ctx=document.getElementById('overviewChart').getContext('2d')
 function DI(w){let ctx=document.getElementById('indexCompareChart').getContext('2d');if(icci)icci.destroy();if(!w||!w.length)return;let ch=w.map((s,i)=>{if(i===0)return 0;let p=w[i-1].n;return p>0?((s.n-p)/p)*100:0});icci=new Chart(ctx,{type:'bar',data:{labels:w.map(s=>s.d),datasets:[{label:'每週淨值變化率 (%)',data:ch,backgroundColor:ch.map(v=>v>=0?'rgba(231,76,60,0.7)':'rgba(39,174,96,0.7)'),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5',font:{size:10}},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>v+'%'},grid:{color:'#f0f2f5'}}}}})}
 function DN(w){let ctx=document.getElementById('navChart').getContext('2d');if(nci)nci.destroy();if(!w||!w.length)return;nci=new Chart(ctx,{type:'line',data:{labels:w.map(s=>s.d),datasets:[{label:'每單位淨值 (NT$)',data:w.map(s=>s.n||0),borderColor:'#1a56db',backgroundColor:'rgba(26,86,219,0.08)',fill:true,tension:0.2,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}}},scales:{x:{ticks:{color:'#8a9bb5',font:{size:10}},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>'NT$ '+v.toFixed(2)},grid:{color:'#f0f2f5'}}}}})}
 
-function SM(i,md,msd){
+function SM(i,md,msd,snapshot){
   cmi=i;OS.style.display='none';MS.style.display='block';
-  let mi=CSV.mb[i],iv=md[i]||[],s=CN(iv),l=s.length?s[s.length-1]:null,cv=l?l.v:0,ti=iv.reduce((s,v)=>s+v.a,0),tu=l?l.cu:0,ro=ti>0?((cv-ti)/ti)*100:0;
+  let mi=CSV.mb[i],iv=md[i]||[],s=CN(iv),l=s.length?s[s.length-1]:null,tu=iv.reduce((sum,v)=>sum+v.u,0),ti=iv.reduce((sum,v)=>sum+v.a,0),member=snapshot?.members?.[i],cv=member?member.value:(tu*(snapshot?.latestNav||0)),ro=ti>0?((cv-ti)/ti)*100:0;
   document.getElementById('memberTitle').textContent=mi.n+' 投資明細';
   document.getElementById('memberCards').innerHTML=[
     {l:'累計申購金額',v:'NT$ '+FN(ti,0)},{l:'目前資產價值',v:'NT$ '+FN(cv,0),g:1},{l:'個人報酬率',v:FR(ro)},{l:'持有單位數',v:FN(tu,5)}
@@ -384,36 +393,10 @@ function renderTargetTracker(ct, wn){
   document.getElementById('goalProgressBar').style.width = pct + '%';
   document.getElementById('goalProgressLabel').textContent = pct.toFixed(2) + '%';
 
-  // 預估達成時間（基於歷史月成長率）
-  let monthlyReturn = null;
-  if(wn && wn.length >= 3){
-    const first = wn[0];
-    const last = wn[wn.length - 1];
-    const fParts = first.d.split('/').map(Number);
-    const lParts = last.d.split('/').map(Number);
-    const months = (lParts[0] - fParts[0]) * 12 + (lParts[1] - fParts[1]) + (lParts[2] - fParts[2]) / 30;
-    if(months > 0 && first.a > 0){
-      const totalReturn = last.a / first.a;
-      monthlyReturn = Number.isFinite(totalReturn) && totalReturn > 0
-        ? Math.pow(totalReturn, 1 / months) : null;
-      if(monthlyReturn > 1 && ct < GOAL){
-        const n = Math.log(GOAL / ct) / Math.log(monthlyReturn);
-        const years = n / 12;
-        if(years < 100){
-          const etaDate = new Date();
-          etaDate.setMonth(etaDate.getMonth() + Math.round(n));
-          const etaStr = etaDate.getFullYear() + '/' + (etaDate.getMonth()+1) + ' 前後';
-          document.getElementById('goalEta').textContent = '約 ' + years.toFixed(1) + ' 年 (' + etaStr + ')';
-          document.getElementById('goalEta').style.fontSize = '0.9rem';
-          return;
-        }
-      }
-    }
-  }
-  document.getElementById('goalEta').textContent = monthlyReturn === null
-    ? '資料不足無法估算'
-    : monthlyReturn > 1 ? '資料不足無法估算' : '目前虧損，暫時無法估算';
-  document.getElementById('goalEta').style.fontSize = '0.75rem';
+  const increments=(wn||[]).slice(1).map((r,i)=>r.i-(wn[i]?.i||0)).filter(v=>v>0), monthly=increments.length?increments.at(-1):0;
+  const scenarios=Financial.goalScenarios(ct,monthly,GOAL);
+  document.getElementById('goalEta').innerHTML=scenarios.map(s=>s.months?`${s.label} ${(s.rate*100).toFixed(0)}%：${(s.months/12).toFixed(1)} 年`:`${s.label}：無法估算`).join('<br>')+'<br><small>假設每月投入 NT$ '+FN(monthly,0)+'；複利投入模型，非精確日期</small>';
+  document.getElementById('goalEta').style.fontSize='0.75rem';
 }
 
 // ========================
@@ -425,46 +408,15 @@ function renderRiskMetrics(wn, comparisonValues = null){
     return;
   }
 
-  // 週報酬率
-  const returns = [];
-  for(let i = 1; i < wn.length; i++){
-    if(wn[i-1].a > 0) returns.push((wn[i].a - wn[i-1].a) / wn[i-1].a);
-  }
-  if(returns.length < 2) return;
+  const metrics=Financial.navMetrics(wn,0.015); if(!metrics)return;
 
   // === MDD（最大回撤）===
-  let peak = -Infinity, mdd = 0;
-  const values = wn.map(w => w.a);
-  const drawdowns = values.map(v => {
-    if(v > peak) peak = v;
-    const dd = (peak - v) / peak;
-    if(dd > mdd) mdd = dd;
-    return dd;
-  });
-
-  // === 年化波動率 ===
-  const meanR = returns.reduce((a, b) => a + b, 0) / returns.length;
-  const variance = returns.reduce((a, b) => a + (b - meanR) ** 2, 0) / returns.length;
-  const weeklyVol = Math.sqrt(variance);
-  const annualVol = weeklyVol * Math.sqrt(52);
-
-  // === 年化報酬率 ===
-  const first = wn[0], last = wn[wn.length - 1];
-  const fParts = first.d.split('/').map(Number);
-  const lParts = last.d.split('/').map(Number);
-  const years = ((lParts[0] - fParts[0]) * 12 + (lParts[1] - fParts[1]) + (lParts[2] - fParts[2]) / 30) / 12;
-  let annualReturn = 0;
-  if(years > 0 && first.a > 0){
-    annualReturn = Math.pow(last.a / first.a, 1 / years) - 1;
-  }
-
-  // === 夏普比率 ===
-  const riskFree = 0.015;
-  const sharpe = annualVol > 0 ? (annualReturn - riskFree) / annualVol : 0;
+  const {mdd,volatility:annualVol,annualReturn,sharpe,drawdowns}=metrics;
+  document.querySelector('#tabAnalysis .section-sub').textContent='基於 '+metrics.years.toFixed(2)+' 年、'+wn.length+' 筆週淨值；'+(metrics.warning?'資料不足一年，年化結果高度不穩定':'依實際期間年化')+'。';
 
   // === 渲染 ===
-  document.getElementById('riskMdd').querySelector('.rc-value').textContent = (-mdd * 100).toFixed(2) + '%';
-  document.getElementById('riskMdd').className = 'risk-card ' + (mdd < 0.05 ? 'good' : mdd < 0.15 ? 'warn' : 'bad');
+  document.getElementById('riskMdd').querySelector('.rc-value').textContent = (mdd * 100).toFixed(2) + '%';
+  document.getElementById('riskMdd').className = 'risk-card ' + (mdd > -0.05 ? 'good' : mdd > -0.15 ? 'warn' : 'bad');
 
   document.getElementById('riskVol').querySelector('.rc-value').textContent = (annualVol * 100).toFixed(2) + '%';
   document.getElementById('riskVol').className = 'risk-card ' + (annualVol < 0.20 ? 'good' : annualVol < 0.30 ? 'warn' : 'bad');
@@ -484,7 +436,7 @@ function renderRiskMetrics(wn, comparisonValues = null){
       labels: wn.map(w => w.d),
       datasets: [{
         label: '回撤幅度',
-        data: drawdowns.map(d => -d * 100),
+        data: drawdowns.map(d => d * 100),
         borderColor: '#e74c3c',
         backgroundColor: 'rgba(231,76,60,0.12)',
         fill: true, tension: 0.2, pointRadius: 1
@@ -590,7 +542,7 @@ async function fetch0050Prices(wn = [], preset = null) {
   return null;
 }
 
-async function renderDCAComparison(wn, presetPrices = null){
+async function renderDCAComparison(wn, presetPrices = null, cashflowRows = []){
   const statusEl = document.getElementById('dcaStatus');
   if(!wn || wn.length < 2){
     statusEl.innerHTML = '<div class="anl-error">⚠️ 歷史資料不足，無法進行比較</div>';
@@ -617,11 +569,8 @@ async function renderDCAComparison(wn, presetPrices = null){
     const d = new Date(dateStr.replace(/\//g, '-'));
     for(let offset = 1; offset <= 7; offset++){
       const fwd = new Date(d); fwd.setDate(fwd.getDate() + offset);
-      const bwd = new Date(d); bwd.setDate(bwd.getDate() - offset);
       const fs = fwd.getFullYear() + '/' + String(fwd.getMonth()+1).padStart(2,'0') + '/' + String(fwd.getDate()).padStart(2,'0');
-      const bs = bwd.getFullYear() + '/' + String(bwd.getMonth()+1).padStart(2,'0') + '/' + String(bwd.getDate()).padStart(2,'0');
       if(priceMap[fs]) return priceMap[fs];
-      if(priceMap[bs]) return priceMap[bs];
     }
     return null;
   }
@@ -631,32 +580,17 @@ async function renderDCAComparison(wn, presetPrices = null){
   );
   const current0050Price = all0050Dates.length > 0 ? prices0050[all0050Dates[all0050Dates.length - 1]] : null;
 
-  // 歷史起點先視為現金本金，從下一個月1號開始用開盤價買入。
   let cumShares = 0;
   const investRecords = [];
   let totalInvested0050 = 0;
   let pendingCash = 0;
 
-  for(let i = 0; i < wn.length; i++){
-    const periodInvest = i === 0 ? wn[i].i : wn[i].i - wn[i-1].i;
-    if(periodInvest <= 0) continue;
-
-    const baseDate = new Date(wn[i].d.replace(/\//g, '-'));
-    pendingCash += periodInvest;
-    totalInvested0050 += periodInvest;
-    let purchaseDate = baseDate;
-    if(i === 0){
-      purchaseDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1);
-    } else {
-      purchaseDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
-    }
-    const ds = purchaseDate.getFullYear() + '/' + String(purchaseDate.getMonth()+1).padStart(2,'0') + '/01';
-    const price = findClosestPrice(ds, prices0050) || current0050Price;
-    if(price && price > 0){
-      cumShares += pendingCash / price;
-      investRecords.push({ d: ds, amount: pendingCash, price: price, shares: cumShares, value: cumShares * price });
-      pendingCash = 0;
-    }
+  const flows=(cashflowRows||[]).filter(r=>r.a>0).sort((a,b)=>PD(a.d)-PD(b.d));
+  for(const flow of flows){
+    const ds=Financial.nextTradingDate(flow.d,prices0050), price=ds?prices0050[ds]:null;
+    totalInvested0050+=flow.a;
+    if(!price){ statusEl.innerHTML+='<div class="anl-error">⚠️ 0050 缺少 '+flow.d+' 及其後 7 日價格，未靜默忽略這筆投入。</div>'; continue; }
+    cumShares+=flow.a/price; investRecords.push({d:ds,amount:flow.a,price,shares:cumShares,value:cumShares*price});
   }
 
   // 以週為單位產出時間序列（與 wn 同步）
@@ -685,7 +619,7 @@ async function renderDCAComparison(wn, presetPrices = null){
   }
   renderRiskMetrics(wn, dcaValues);
 
-  const dcaValue = cumShares > 0 && current0050Price > 0 ? cumShares * current0050Price : 0;
+  const dcaValue = cumShares > 0 && current0050Price > 0 ? cumShares * current0050Price : pendingCash;
   const fundValue = wn[wn.length - 1].a;
   const fundRoi = totalInvested0050 > 0 ? ((fundValue - totalInvested0050) / totalInvested0050 * 100) : 0;
   const dcaRoi = totalInvested0050 > 0 ? ((dcaValue - totalInvested0050) / totalInvested0050 * 100) : 0;
@@ -724,7 +658,7 @@ async function renderDCAComparison(wn, presetPrices = null){
           fill: true, tension: 0.2, pointRadius: 2
         },
         {
-          label: '0050 定期定額模擬（每月1號投入）',
+          label: '0050（實際現金流日期，順延至下一交易日）',
           data: dcaValues,
           borderColor: '#27ae60',
           backgroundColor: 'rgba(39,174,96,0.08)',
@@ -759,7 +693,7 @@ async function renderDCAComparison(wn, presetPrices = null){
 }// ========================
 //  Tab 切換 & 初始化
 // ========================
-document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',function(){document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));this.classList.add('active');document.getElementById(this.dataset.tab).classList.add('active')})});
+document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',function(){document.querySelectorAll('.tab-btn').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false')});document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));this.classList.add('active');this.setAttribute('aria-selected','true');document.getElementById(this.dataset.tab).classList.add('active')})});
 
 async function init(){
   try{
@@ -771,12 +705,12 @@ async function init(){
     CSV.mb.forEach((m,i)=>{let o=document.createElement('option');o.value=i;o.textContent=m.n;SEL.appendChild(o)});
     BK.addEventListener('click',BKFn);
     document.getElementById('navOverview').addEventListener('click',function(e){e.preventDefault();BKFn();});
-    SEL.addEventListener('change',function(e){let i=parseInt(e.target.value);if(!isNaN(i))SM(i,md,msd);else BKFn()});
-    document.addEventListener('click',function(e){let r=e.target.closest('.clickable-row');if(r){let i=parseInt(r.dataset.idx);if(!isNaN(i)){SEL.value=i;SM(i,md,msd)}}});
+    SEL.addEventListener('change',function(e){let i=parseInt(e.target.value);if(!isNaN(i))SM(i,md,msd,data.snapshot);else BKFn()});
+    document.addEventListener('click',function(e){let r=e.target.closest('.clickable-row');if(r){let i=parseInt(r.dataset.idx);if(!isNaN(i)){SEL.value=i;SM(i,md,msd,data.snapshot)}}});
 
     RO(cv,msd,wn,data);
     LM.style.display='none';
-  }catch(e){console.error(e);LM.innerHTML='<div style="color:#e74c3c;font-size:16px;font-weight:600">⚠️ 資料讀取失敗</div><div style="color:#8a9bb5;font-size:13px;margin-top:4px">'+EH(e.message)+'</div><br><button onclick="location.reload()" style="padding:8px 24px;background:#1a56db;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px">重新載入</button>';}
+  }catch(e){console.error(e);LM.innerHTML='<div style="color:#e74c3c;font-size:16px;font-weight:600">⚠️ '+EH(e.message)+'</div><br><button id="retryLoad" style="padding:8px 24px;background:#1a56db;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px">重試</button>';document.getElementById('retryLoad').addEventListener('click',init);}
 }
 init();
 </script>
