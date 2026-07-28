@@ -219,7 +219,7 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
 
   <!-- 0050 定期定額比較 -->
   <div class="section-title">0050 定期定額比較</div>
-  <div class="section-sub">相同投入金額與日期，每月1號以收盤價買入 0050（實際為每月2/12/22號扣款，長期視為同一天）</div>
+  <div class="section-sub">相同投入金額與日期，每月1號以開盤價買入 0050（若遇非交易日，順延至下一個交易日）</div>
   <div id="dcaStatus"></div>
   <div class="cmp-summary" id="dcaSummary">
     <div class="cmp-card"><div class="cc-label">基金目前資產</div><div class="cc-value" id="dcaFundValue">--</div><div class="cc-sub">00631L 合資</div></div>
@@ -267,7 +267,7 @@ const CSV = {
     {n:'育仔',u:'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd2t7A2bMmI5cPucJcWiQ93stLTWs1Kmho_3hu_lXkT1uono0NkGMF0tPfW5c9UhEoJvKczPLJ0o82/pub?gid=330914372&single=true&output=csv'}
   ],
   // 0050 歷史股價 CSV（選填）
-  // 格式：日期(YYYY/MM/DD),收盤價
+  // 格式：日期(YYYY/MM/DD),開盤價
   // 若不設定，將嘗試從 Yahoo Finance 自動取得
   d0050: ''
 };
@@ -339,7 +339,7 @@ function RO(cv,msd,wn){
   // === 績效分析 ===
   renderTargetTracker(ct, wn);
   renderRiskMetrics(wn);
-  renderDCAComparison(wn);
+  renderDCAComparison(wn, data.p0050);
 }
 
 function DP(ca,st){let ctx=document.getElementById('pieChart').getContext('2d');if(pci)pci.destroy();pci=new Chart(ctx,{type:'doughnut',data:{labels:['現金','股票曝險 (00631L)'],datasets:[{data:[ca,st],backgroundColor:['#4a90d9','#c8963e'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#5a6a7e',font:{size:12}}},tooltip:{callbacks:{label:function(ctx){let l=ctx.label||'',v=ctx.parsed||0;return l+': NT$ '+FN(v,0)}}}}}})}
@@ -507,7 +507,11 @@ function renderRiskMetrics(wn){
 // ========================
 //  0050 定期定額比較
 // ========================
-async function fetch0050Prices(wn = []) {
+async function fetch0050Prices(wn = [], preset = null) {
+  if(preset && Object.keys(preset).length > 0){
+    document.getElementById('dcaSourceLabel').textContent = '後端 Yahoo Finance 開盤價 (0050.TW)';
+    return preset;
+  }
   // 優先使用設定的 CSV
   if(CSV.d0050){
     try {
@@ -542,7 +546,7 @@ async function fetch0050Prices(wn = []) {
   const endDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const startTs = Math.floor(startDate.getTime() / 1000);
   const endTs = Math.floor(endDate.getTime() / 1000);
-  const yahooPath = '/v8/finance/chart/0050.TW?period1=' + startTs + '&period2=' + endTs + '&interval=1wk&includeAdjustedClose=true';
+  const yahooPath = '/v8/finance/chart/0050.TW?period1=' + startTs + '&period2=' + endTs + '&interval=1d';
 
   for(const baseUrl of yahooUrls){
     try {
@@ -556,16 +560,16 @@ async function fetch0050Prices(wn = []) {
       if(!result) throw new Error('無資料');
 
       const timestamps = result.timestamp || [];
-      const adjCloses = result.indicators?.adjclose?.[0]?.adjclose || result.indicators?.quote?.[0]?.close || [];
+       const opens = result.indicators?.quote?.[0]?.open || [];
 
       const prices = {};
       for(let i = 0; i < timestamps.length; i++){
         const d = new Date(timestamps[i] * 1000);
         const ds = d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
-        if(adjCloses[i]) prices[ds] = adjCloses[i];
+         if(opens[i]) prices[ds] = opens[i];
       }
       if(Object.keys(prices).length > 0){
-        document.getElementById('dcaSourceLabel').textContent = 'Yahoo Finance (0050.TW)';
+         document.getElementById('dcaSourceLabel').textContent = 'Yahoo Finance 開盤價 (0050.TW)';
         return prices;
       }
     } catch(e) {
@@ -576,7 +580,7 @@ async function fetch0050Prices(wn = []) {
   return null;
 }
 
-async function renderDCAComparison(wn){
+async function renderDCAComparison(wn, presetPrices = null){
   const statusEl = document.getElementById('dcaStatus');
   if(!wn || wn.length < 2){
     statusEl.innerHTML = '<div class="anl-error">⚠️ 歷史資料不足，無法進行比較</div>';
@@ -585,9 +589,9 @@ async function renderDCAComparison(wn){
 
   statusEl.innerHTML = '<div class="anl-note">⏳ 正在取得 0050 歷史股價...</div>';
 
-  const prices0050 = await fetch0050Prices(wn);
+  const prices0050 = await fetch0050Prices(wn, presetPrices);
   if(!prices0050 || Object.keys(prices0050).length === 0){
-    statusEl.innerHTML = '<div class="anl-error">⚠️ 暫無法取得 0050 歷史股價，0050 比較區塊將不顯示。您可在 Google Sheets 新增「0050 股價」分頁並設定 CSV.d0050。</div>';
+    statusEl.innerHTML = '<div class="anl-error">⚠️ 暫無法取得 0050 歷史股價，請稍後重新整理。</div>';
     document.getElementById('dcaFundValue').textContent = '--';
     document.getElementById('dca0050Value').textContent = '--';
     document.getElementById('dcaFundRoi').textContent = '--';

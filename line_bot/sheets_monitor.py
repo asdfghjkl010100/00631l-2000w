@@ -157,7 +157,45 @@ def fetch_dashboard_data() -> dict:
             continue
     data['wn'] = history
     data['md'] = [fetch_member_detail(gid) for gid in Config.MEMBER_GIDS.values()]
+    data['p0050'] = fetch_0050_prices(history)
     return data
+
+
+def fetch_0050_prices(history: list) -> dict:
+    """由後端抓取 0050.TW 每日開盤價，避免瀏覽器 CORS 限制。"""
+    if not history:
+        return {}
+    try:
+        start = datetime.strptime(history[0]['d'], '%Y/%m/%d')
+        end = datetime.now(TZ) + timedelta(days=1)
+        params = {
+            'period1': int(start.replace(tzinfo=TZ).timestamp()),
+            'period2': int(end.timestamp()),
+            'interval': '1d',
+            'includeAdjustedClose': 'true',
+        }
+        for host in ('query1.finance.yahoo.com', 'query2.finance.yahoo.com'):
+            response = requests.get(
+                f'https://{host}/v8/finance/chart/0050.TW',
+                params=params,
+                timeout=20,
+                headers={'User-Agent': 'Mozilla/5.0'},
+            )
+            response.raise_for_status()
+            result = response.json().get('chart', {}).get('result', [{}])[0]
+            timestamps = result.get('timestamp', [])
+            opens = result.get('indicators', {}).get('quote', [{}])[0].get('open', [])
+            prices = {}
+            for timestamp, opening in zip(timestamps, opens):
+                if opening is None:
+                    continue
+                date = datetime.fromtimestamp(timestamp, TZ)
+                prices[date.strftime('%Y/%m/%d')] = opening
+            if prices:
+                return prices
+    except (requests.RequestException, ValueError, IndexError, KeyError, TypeError) as exc:
+        print(f'[0050] 歷史股價下載失敗：{exc}', file=__import__('sys').stderr)
+    return {}
 
 
 def compute_cache_fingerprint() -> str:
