@@ -246,7 +246,7 @@ body{background:#f5f7fa;color:#2c3e50;font-family:'Noto Sans TC','PingFang TC','
 <button class="back-btn" id="backToOverview">← 返回總覽</button>
 <div class="section-title" id="memberTitle"></div>
 <div class="info-grid" id="memberCards"></div>
-<div class="chart-row"><div class="chart-box"><div class="chart-title">個人資產價值走勢</div><canvas id="memberNavChart"></canvas></div><div class="chart-box"><div class="chart-title">每月申購金額</div><canvas id="memberInvestmentChart"></canvas></div></div>
+<div class="chart-row"><div class="chart-box"><div class="chart-title">個人資產價值 vs 累計申購金額</div><canvas id="memberNavChart"></canvas></div><div class="chart-box"><div class="chart-title">每月申購金額</div><canvas id="memberInvestmentChart"></canvas></div></div>
 <div class="section-title">歷史交易明細</div>
 <div class="table-wrap"><table id="memberDetailTable"><thead><tr><th>日期</th><th>申購金額</th><th>成交淨值</th><th>購得單位數</th><th>累積單位</th></tr></thead><tbody id="memberDetailBody"></tbody></table></div></div></div>
 <script>
@@ -362,8 +362,8 @@ function SM(i,md,msd){
 function DM(s,iv){
   if(!s.length)return;
   let c1=document.getElementById('memberNavChart').getContext('2d');if(mnci)mnci.destroy();
-  let ds=s.map(x=>x.d),vs=s.map(x=>x.v),ci=[],ti=0,ii=0;
-  for(let x of s){while(ii<iv.length&&iv[ii].dk<=x.dk){ti+=iv[ii].a;ii++}ci.push(ti)}
+  let ds=s.map(x=>x.d),vs=s.map(x=>x.v),ci=[],ti=0;
+  for(let row of iv){ti+=row.a;ci.push(ti)}
   mnci=new Chart(c1,{type:'line',data:{labels:ds,datasets:[{label:'個人資產價值 (NT$)',data:vs,borderColor:'#c8963e',backgroundColor:'rgba(200,150,62,0.1)',fill:true,tension:0.2,pointRadius:1},{label:'累計申購金額',data:ci,borderColor:'#4a90d9',borderDash:[6,4],fill:false,tension:0.2,pointRadius:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#5a6a7e',font:{size:11}}},tooltip:{callbacks:{label:function(ctx){let d=ctx.dataset.label||'',v=ctx.parsed.y||0;return d+': NT$ '+FN(v,0)}}}},scales:{x:{ticks:{color:'#8a9bb5'},grid:{color:'#f0f2f5'}},y:{ticks:{color:'#8a9bb5',callback:v=>FN(v,0)},grid:{color:'#f0f2f5'}}}}});
   let c2=document.getElementById('memberInvestmentChart').getContext('2d');if(mpci)mpci.destroy();
   let ml=iv.map(v=>v.d.substring(0,7)),am=iv.map(v=>v.a);
