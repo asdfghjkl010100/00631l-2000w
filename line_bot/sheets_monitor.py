@@ -176,7 +176,7 @@ def fetch_0050_prices(history: list) -> dict:
     if not history:
         return {}
     try:
-        start = datetime.strptime(history[0]['d'], '%Y/%m/%d')
+        start = min(datetime.strptime(row['d'], '%Y/%m/%d') for row in history if row.get('d'))
         end = datetime.now(TZ) + timedelta(days=1)
         params = {
             'period1': int(start.replace(tzinfo=TZ).timestamp()),
